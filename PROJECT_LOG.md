@@ -117,16 +117,28 @@ Destructive:   #DC2626
 - [x] Xác định thiết kế: Premium Modern + Aurora, màu teal/cam
 - [x] Xác định công nghệ: Next.js 14 + TypeScript + Tailwind + shadcn/ui + Bunny + Prisma + NextAuth + Stripe
 - [x] Xác định cấu trúc trang: 9 routes chính
+- [x] Setup Next.js 14 (App Router) + TypeScript + Tailwind CSS + shadcn/ui
+- [x] Tạo cấu trúc thư mục chuẩn (app router, components, lib, hooks, types)
+- [x] Cấu hình fonts: Plus Jakarta Sans (heading) + DM Sans (body) + JetBrains Mono
+- [x] Thiết lập CSS variables theo design system (teal/cam/WCAG AA)
+- [x] Setup Prisma 5 + schema đầy đủ: User, Account, Session, Course, Section, Lesson, Enrollment, Progress, Review, Order
+- [x] Setup NextAuth.js beta (JWT + Google OAuth + Credentials)
+- [x] Tạo src/lib/prisma.ts (singleton client)
+- [x] Tạo src/lib/auth.ts (NextAuth config)
+- [x] Tạo src/types/index.ts (TypeScript interfaces)
+- [x] Tạo .env.example với tất cả biến môi trường cần thiết
+- [x] Push lên GitHub (branch main)
 
 ### Việc tiếp theo
-- [ ] Setup Next.js 14 + TypeScript + Tailwind + shadcn/ui
-- [ ] Cấu trúc thư mục dự án
-- [ ] Setup Prisma + database schema
-- [ ] Tích hợp Bunny Stream
-- [ ] Xây dựng Landing page
-- [ ] Auth (NextAuth)
-- [ ] Thanh toán (Stripe / PayOS)
+- [ ] Kết nối database thực (Supabase / Neon PostgreSQL)
+- [ ] Chạy prisma migrate dev lần đầu
+- [ ] Xây dựng Landing page (Hero, Stats, Courses, Testimonials...)
+- [ ] Tích hợp Bunny Stream (upload + player)
+- [ ] Auth UI: trang Login / Register / Forgot Password
+- [ ] Course detail page + Bunny player
+- [ ] Dashboard học viên
 - [ ] Admin panel
+- [ ] Thanh toán (Stripe / PayOS)
 
 ---
 
