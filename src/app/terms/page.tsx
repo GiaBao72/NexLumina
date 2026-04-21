@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import Navbar from '@/components/Navbar';
 
 // ── Section definitions ───────────────────────────────────────────────────────
 const sections = [
@@ -121,6 +122,7 @@ export default function TermsPage() {
 
   return (
     <div className="min-h-screen bg-white font-sans">
+      <Navbar />
 
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
       <section className="bg-gradient-to-br from-teal-700 via-teal-600 to-emerald-700 text-white py-20 px-6">

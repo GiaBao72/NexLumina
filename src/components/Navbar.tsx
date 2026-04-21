@@ -3,18 +3,20 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useSession, signOut } from "next-auth/react";
-import { Menu, X, BookOpen, ChevronDown, LogOut, User, LayoutDashboard, ShieldCheck } from "lucide-react";
+import { Menu, X, BookOpen, ChevronDown, LogOut, User, LayoutDashboard, ShieldCheck, ShoppingCart } from "lucide-react";
+import { useCart } from "@/context/CartContext";
 
 const navLinks = [
   { label: "Khóa học", href: "/courses" },
   { label: "Lộ trình", href: "/roadmap" },
-  { label: "Blog", href: "/blog" },
 ];
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const { data: session, status } = useSession();
+  const { items } = useCart();
+  const cartCount = items.length;
   const user = session?.user;
   const isAdmin = (user as any)?.role === "ADMIN";
 
@@ -54,6 +56,20 @@ export default function Navbar() {
 
         {/* Desktop CTA */}
         <div className="hidden md:flex items-center gap-3">
+          {/* Cart icon */}
+          <Link
+            href="/cart"
+            className="relative rounded-md p-2 text-gray-600 hover:text-teal-600 hover:bg-teal-50 transition-colors"
+            aria-label="Giỏ hàng"
+          >
+            <ShoppingCart className="h-5 w-5" />
+            {cartCount > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-teal-600 text-[10px] font-bold text-white leading-none">
+                {cartCount > 9 ? "9+" : cartCount}
+              </span>
+            )}
+          </Link>
+
           {status === "loading" ? (
             <div className="h-8 w-24 rounded-lg bg-gray-100 animate-pulse" />
           ) : user ? (
@@ -137,13 +153,28 @@ export default function Navbar() {
           )}
         </div>
 
-        {/* Mobile toggle */}
-        <button
-          className="md:hidden rounded-md p-2 text-gray-600 hover:bg-gray-100"
-          onClick={() => setOpen(!open)}
-        >
-          {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
+        {/* Mobile: cart + toggle */}
+        <div className="md:hidden flex items-center gap-1">
+          {/* Cart icon mobile */}
+          <Link
+            href="/cart"
+            className="relative rounded-md p-2 text-gray-600 hover:text-teal-600 hover:bg-teal-50 transition-colors"
+            aria-label="Giỏ hàng"
+          >
+            <ShoppingCart className="h-5 w-5" />
+            {cartCount > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-teal-600 text-[10px] font-bold text-white leading-none">
+                {cartCount > 9 ? "9+" : cartCount}
+              </span>
+            )}
+          </Link>
+          <button
+            className="rounded-md p-2 text-gray-600 hover:bg-gray-100"
+            onClick={() => setOpen(!open)}
+          >
+            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile menu */}
@@ -174,6 +205,10 @@ export default function Navbar() {
                 <Link href="/dashboard" onClick={() => setOpen(false)}
                   className="block rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-teal-50 hover:text-teal-600 border border-gray-200 text-center">
                   Dashboard
+                </Link>
+                <Link href="/profile" onClick={() => setOpen(false)}
+                  className="block rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-teal-50 hover:text-teal-600 border border-gray-200 text-center">
+                  Hồ sơ cá nhân
                 </Link>
                 {isAdmin && (
                   <Link href="/admin" onClick={() => setOpen(false)}

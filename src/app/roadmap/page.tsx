@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Navbar from '@/components/Navbar';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 type Level = 'beginner' | 'intermediate' | 'advanced';
@@ -237,6 +238,7 @@ export default function RoadmapPage() {
 
   return (
     <div className="min-h-screen bg-white font-sans">
+      <Navbar />
 
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
       <section className="bg-gradient-to-br from-slate-900 via-slate-800 to-teal-900 text-white py-20 px-6 relative overflow-hidden">

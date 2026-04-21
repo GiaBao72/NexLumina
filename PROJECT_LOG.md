@@ -188,13 +188,53 @@ Destructive:   #DC2626
 - [x] order-success/page.tsx: đọc order từ sessionStorage; hiện đúng items + tổng + email; link "Vào học ngay" đúng slug; fix Math.random() trong module scope
 - [x] Build 20/20 routes ✓ — PM2 restart online
 
+#### Hoàn thành (2026-04-21 — session cuối — Admin completeness audit + bulk fix)
+
+**Security / Auth guard:**
+- [x] `proxy.ts` matcher: thêm `/admin` (trước chỉ có `/admin/:path*`, bỏ sót root)
+- [x] `admin/layout.tsx`: thêm `useEffect` redirect guard + loading spinner
+
+**Trang + API mới:**
+- [x] `/admin/categories` — list/add/edit/delete; check course trước khi xóa; icon emoji
+- [x] `/admin/instructors` — list/tạo tài khoản INSTRUCTOR; ban/unban
+- [x] `GET/POST/PATCH/DELETE /api/admin/categories` — full CRUD, slug tự gen unique
+- [x] `GET/POST/PATCH /api/admin/instructors` — query users role INSTRUCTOR
+- [x] Sidebar thêm 2 mục: Danh mục + Giảng viên
+
+**Courses:**
+- [x] Form add/edit: dropdown Category + Instructor fetch từ DB
+- [x] `openEdit`: giữ đúng `categoryId` UUID và `instructorId`
+- [x] `DELETE /api/admin/courses`: check enrollment trước, trả 409 rõ ràng
+- [x] `GET /api/admin/courses`: trả `statusCounts` tổng DB
+- [x] Validate enum level/status, giá âm/salePrice > price
+
+**Stats/Dashboard:**
+- [x] Top-5 courses sort theo doanh thu thực (`orderItem.groupBy`)
+- [x] Chart year fix: lọc đúng năm hiện tại
+- [x] Label response: `revenueThisMonth`
+
+**Users/Orders:**
+- [x] Stat cards: đếm `roleCounts` / `statusCounts` từ DB, không đếm page
+- [x] `handleBanToggle`, `handleStatusChange`: thêm `try/catch` + `alert`
+- [x] Pagination `parseInt(...,10) || default` — không còn NaN
+
+**Lessons/Settings/Bunny:**
+- [x] `createLesson` / `updateLesson`: validate title, slug unique auto
+- [x] `settings GET`: `maintenanceMode` trả boolean
+- [x] Bunny delete guard: chỉ ignore 404, lỗi khác trả 502
+
+**Build:** pass 0 error — PM2 online
+
+---
+
 ### Việc tiếp theo
 - [ ] Navbar hiện số lượng badge giỏ hàng (CartContext count)
 - [ ] Google OAuth (khi có client ID/secret)
-- [ ] Tích hợp Bunny Stream thực tế (upload video + token auth)
+- [ ] Tích hợp Bunny Stream thực tế (upload video + token auth — điền .env)
 - [ ] Thanh toán (Stripe / PayOS)
 - [ ] Sitemap.xml, robots.txt, JSON-LD structured data
 - [ ] CSP headers
+- [ ] Rate limiting trên /api/auth/forgot-password
 
 ---
 

@@ -5,18 +5,20 @@ import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Link from "next/link";
-import { mockCourses, formatPrice } from "@/lib/mock-data";
-import { User, BookOpen, Award, ShoppingBag, Lock, LogOut, Camera, Check, Eye, EyeOff } from "lucide-react";
+import { formatPrice } from "@/lib/mock-data";
+import { User, BookOpen, Award, ShoppingBag, Lock, LogOut, Camera, Check, Eye, EyeOff, PlayCircle } from "lucide-react";
 
 type Tab = "info"|"courses"|"certs"|"orders"|"password";
 
-const enrolledCourses = mockCourses.slice(0,4);
-const progressMap: Record<string,number> = {"1":65,"2":30,"3":8,"4":45};
-const mockOrders = [
-  {id:"NL-2025-10023",course:"React & Next.js từ 0 đến Pro",date:"15/04/2025",price:1299000,status:"Hoàn thành"},
-  {id:"NL-2025-09871",course:"UI/UX Design Masterclass",date:"01/03/2025",price:799000,status:"Hoàn thành"},
-  {id:"NL-2025-08456",course:"Python & Data Science",date:"10/01/2025",price:1399000,status:"Hoàn tiền"},
-];
+interface EnrolledCourse {
+  enrollmentId: string; courseId: string; title: string; slug: string;
+  thumbnail: string | null; totalLessons: number; progressPct: number;
+}
+interface OrderItem { courseId: string; price: number; course?: { title: string } | null }
+interface Order {
+  id: string; total: number; status: string; createdAt: string;
+  items: OrderItem[];
+}
 
 const navItems: {tab:Tab;icon:React.ElementType;label:string}[] = [
   {tab:"info",icon:User,label:"Thông tin cá nhân"},
@@ -34,9 +36,16 @@ export default function ProfilePage() {
   const [tab, setTab] = useState<Tab>("info");
   const [showPw, setShowPw] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [form, setForm] = useState({ name: "", email: "", bio: "Đam mê học lập trình và thiết kế web." });
+  const [saveError, setSaveError] = useState("");
+  const [saveLoading, setSaveLoading] = useState(false);
+  const [pwLoading, setPwLoading] = useState(false);
+  const [form, setForm] = useState({ name: "", email: "", bio: "" });
   const [pwForm, setPwForm] = useState({ current: "", newPw: "", confirm: "" });
   const [pwError, setPwError] = useState("");
+  const [enrolledCourses, setEnrolledCourses] = useState<EnrolledCourse[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [coursesLoading, setCoursesLoading] = useState(false);
+  const [ordersLoading, setOrdersLoading] = useState(false);
 
   useEffect(() => {
     if (status === "unauthenticated") router.replace("/login");
@@ -45,11 +54,74 @@ export default function ProfilePage() {
     }
   }, [status, user, router]);
 
-  const handleSave = ()=>{ setSaved(true); setTimeout(()=>setSaved(false),2000); };
-  const handlePw = ()=>{
+  // Fetch courses when tab=courses
+  useEffect(() => {
+    if (tab !== "courses" || status !== "authenticated") return;
+    setCoursesLoading(true);
+    fetch("/api/users/dashboard")
+      .then(r => r.ok ? r.json() : { enrolledCourses: [] })
+      .then(d => setEnrolledCourses(d.enrolledCourses ?? []))
+      .catch(() => {})
+      .finally(() => setCoursesLoading(false));
+  }, [tab, status]);
+
+  // Fetch orders when tab=orders
+  useEffect(() => {
+    if (tab !== "orders" || status !== "authenticated") return;
+    setOrdersLoading(true);
+    fetch("/api/users/orders")
+      .then(r => r.ok ? r.json() : [])
+      .then(d => setOrders(Array.isArray(d) ? d : (d.orders ?? [])))
+      .catch(() => {})
+      .finally(() => setOrdersLoading(false));
+  }, [tab, status]);
+
+  const handleSave = async () => {
+    setSaveLoading(true);
+    setSaveError("");
+    try {
+      const res = await fetch("/api/users/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: form.name, bio: form.bio }),
+      });
+      if (res.ok) {
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2000);
+      } else {
+        const data = await res.json();
+        setSaveError(data.error ?? "Lưu thất bại. Vui lòng thử lại.");
+      }
+    } catch {
+      setSaveError("Đã xảy ra lỗi kết nối. Vui lòng thử lại.");
+    } finally {
+      setSaveLoading(false);
+    }
+  };
+  const handlePw = async () => {
     if(pwForm.newPw.length<8){setPwError("Mật khẩu tối thiểu 8 ký tự");return;}
     if(pwForm.newPw!==pwForm.confirm){setPwError("Mật khẩu không khớp");return;}
-    setPwError(""); setSaved(true); setTimeout(()=>setSaved(false),2000);
+    setPwError("");
+    setPwLoading(true);
+    try {
+      const res = await fetch("/api/auth/change-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentPassword: pwForm.current, newPassword: pwForm.newPw }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setSaved(true);
+        setPwForm({ current: "", newPw: "", confirm: "" });
+        setTimeout(() => setSaved(false), 2000);
+      } else {
+        setPwError(data.error ?? "Đổi mật khẩu thất bại. Vui lòng thử lại.");
+      }
+    } catch {
+      setPwError("Đã xảy ra lỗi kết nối. Vui lòng thử lại.");
+    } finally {
+      setPwLoading(false);
+    }
   };
 
   return (
@@ -112,9 +184,11 @@ export default function ProfilePage() {
                       </div>
                     ))}
                     <button onClick={handleSave}
-                      className="flex items-center gap-2 rounded-xl bg-teal-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-teal-500 transition-colors">
-                      {saved?<><Check className="h-4 w-4"/>Đã lưu!</>:"Lưu thay đổi"}
+                      disabled={saveLoading}
+                      className="flex items-center gap-2 rounded-xl bg-teal-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-teal-500 transition-colors disabled:opacity-60 disabled:cursor-not-allowed">
+                      {saveLoading ? <><span className="h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin"/>Đang lưu...</> : saved?<><Check className="h-4 w-4"/>Đã lưu!</>:"Lưu thay đổi"}
                     </button>
+                    {saveError && <p className="text-sm text-red-600 mt-2">{saveError}</p>}
                   </div>
                 </div>
               )}
@@ -122,21 +196,35 @@ export default function ProfilePage() {
               {tab==="courses" && (
                 <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
                   <h2 className="font-heading font-bold text-gray-900 text-lg mb-5">Khóa học của tôi</h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {enrolledCourses.map(c=>{
-                      const pct=progressMap[c.id]??0;
-                      return (
-                        <div key={c.id} className="rounded-xl border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
-                          <div className={`h-24 bg-gradient-to-br ${c.gradient} flex items-center justify-center`}>
-                            <span className="text-white/30 text-5xl font-bold">{c.title[0]}</span>
+                  {coursesLoading ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {[1,2,3,4].map(i => <div key={i} className="rounded-xl border border-gray-100 overflow-hidden animate-pulse"><div className="h-24 bg-gray-200"/><div className="p-3 space-y-2"><div className="h-4 bg-gray-200 rounded w-3/4"/><div className="h-2 bg-gray-200 rounded-full"/><div className="h-7 bg-gray-200 rounded-lg"/></div></div>)}
+                    </div>
+                  ) : enrolledCourses.length === 0 ? (
+                    <div className="text-center py-10">
+                      <BookOpen className="mx-auto h-10 w-10 text-gray-300 mb-3"/>
+                      <p className="text-gray-500 text-sm mb-4">Bạn chưa đăng ký khóa học nào.</p>
+                      <Link href="/courses" className="rounded-xl bg-teal-600 px-5 py-2 text-sm font-semibold text-white hover:bg-teal-700 transition-colors">Khám phá khóa học</Link>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {enrolledCourses.map(c => (
+                        <div key={c.enrollmentId} className="rounded-xl border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
+                          <div className="h-24 bg-gradient-to-br from-teal-500 to-teal-700 flex items-center justify-center">
+                            {c.thumbnail ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={c.thumbnail} alt={c.title} className="h-full w-full object-cover"/>
+                            ) : (
+                              <PlayCircle className="h-10 w-10 text-white/70"/>
+                            )}
                           </div>
                           <div className="p-3">
                             <p className="text-sm font-semibold text-gray-900 line-clamp-2 mb-2">{c.title}</p>
                             <div className="flex items-center justify-between text-xs text-gray-500 mb-1.5">
-                              <span>{pct}% hoàn thành</span><span>{c.totalLessons} bài</span>
+                              <span>{c.progressPct}% hoàn thành</span><span>{c.totalLessons} bài</span>
                             </div>
                             <div className="w-full bg-gray-100 rounded-full h-1.5 mb-3">
-                              <div className="bg-teal-500 h-1.5 rounded-full" style={{width:`${pct}%`}}/>
+                              <div className="bg-teal-500 h-1.5 rounded-full" style={{width:`${c.progressPct}%`}}/>
                             </div>
                             <Link href={`/learn/${c.slug}/gioi-thieu-khoa-hoc`}
                               className="block text-center rounded-lg bg-teal-600 py-1.5 text-xs font-semibold text-white hover:bg-teal-700 transition-colors">
@@ -144,9 +232,9 @@ export default function ProfilePage() {
                             </Link>
                           </div>
                         </div>
-                      );
-                    })}
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -172,28 +260,42 @@ export default function ProfilePage() {
                   <div className="p-6 border-b border-gray-100">
                     <h2 className="font-heading font-bold text-gray-900 text-lg">Lịch sử mua hàng</h2>
                   </div>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead className="bg-gray-50">
-                        <tr>{["Mã đơn","Khóa học","Ngày mua","Giá","Trạng thái"].map(h=>(
-                          <th key={h} className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
-                        ))}</tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-100">
-                        {mockOrders.map(o=>(
-                          <tr key={o.id} className="hover:bg-gray-50 transition-colors">
-                            <td className="px-5 py-3.5 font-mono text-xs text-teal-600">{o.id}</td>
-                            <td className="px-5 py-3.5 text-gray-900 max-w-[160px] truncate">{o.course}</td>
-                            <td className="px-5 py-3.5 text-gray-500 text-xs">{o.date}</td>
-                            <td className="px-5 py-3.5 font-semibold text-gray-900">{formatPrice(o.price)}</td>
-                            <td className="px-5 py-3.5">
-                              <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${o.status==="Hoàn thành"?"bg-green-100 text-green-700":"bg-red-100 text-red-600"}`}>{o.status}</span>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                  {ordersLoading ? (
+                    <div className="p-6 space-y-3">{[1,2,3].map(i=><div key={i} className="h-10 bg-gray-100 rounded animate-pulse"/>)}</div>
+                  ) : orders.length === 0 ? (
+                    <div className="p-10 text-center">
+                      <ShoppingBag className="mx-auto h-10 w-10 text-gray-300 mb-3"/>
+                      <p className="text-gray-500 text-sm">Chưa có đơn hàng nào.</p>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead className="bg-gray-50">
+                          <tr>{["Mã đơn","Khóa học","Ngày mua","Tổng tiền","Trạng thái"].map(h=>(
+                            <th key={h} className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
+                          ))}</tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                          {orders.map(o=>(
+                            <tr key={o.id} className="hover:bg-gray-50 transition-colors">
+                              <td className="px-5 py-3.5 font-mono text-xs text-teal-600">{o.id.slice(0,12).toUpperCase()}</td>
+                              <td className="px-5 py-3.5 text-gray-900 max-w-[160px] truncate">
+                                {o.items?.[0]?.course?.title ?? "—"}
+                                {o.items?.length > 1 ? ` +${o.items.length-1} khác` : ""}
+                              </td>
+                              <td className="px-5 py-3.5 text-gray-500 text-xs">{new Date(o.createdAt).toLocaleDateString("vi-VN")}</td>
+                              <td className="px-5 py-3.5 font-semibold text-gray-900">{formatPrice(o.total)}</td>
+                              <td className="px-5 py-3.5">
+                                <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${o.status==="PAID"?"bg-green-100 text-green-700":o.status==="REFUNDED"?"bg-red-100 text-red-600":"bg-yellow-100 text-yellow-700"}`}>
+                                  {o.status==="PAID"?"Hoàn thành":o.status==="REFUNDED"?"Hoàn tiền":o.status==="FAILED"?"Thất bại":"Chờ xử lý"}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -217,8 +319,9 @@ export default function ProfilePage() {
                       </div>
                     ))}
                     <button onClick={handlePw}
-                      className="rounded-xl bg-teal-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-teal-500 transition-colors">
-                      Cập nhật mật khẩu
+                      disabled={pwLoading}
+                      className="rounded-xl bg-teal-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-teal-500 transition-colors disabled:opacity-60 disabled:cursor-not-allowed">
+                      {pwLoading ? "Đang xử lý..." : "Cập nhật mật khẩu"}
                     </button>
                   </div>
                 </div>

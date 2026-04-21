@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import Navbar from '@/components/Navbar';
 
 // ── Section definitions ───────────────────────────────────────────────────────
 const sections = [
@@ -99,6 +100,7 @@ export default function PrivacyPage() {
 
   return (
     <div className="min-h-screen bg-white font-sans">
+      <Navbar />
 
       {/* ── Hero ───────────────────────────────────────────────────────────── */}
       <section className="bg-gradient-to-br from-blue-700 via-blue-600 to-indigo-700 text-white py-20 px-6">
@@ -399,7 +401,7 @@ export default function PrivacyPage() {
                   ✉️ Email DPO
                 </a>
                 <a
-                  href="/account/privacy"
+                  href="/privacy"
                   className="flex-1 text-center bg-white/10 hover:bg-white/20 text-white font-semibold text-sm py-2.5 px-4 rounded-lg transition-colors"
                 >
                   🖥️ Cổng tự phục vụ
@@ -641,7 +643,7 @@ export default function PrivacyPage() {
                   ✉️ Liên hệ DPO ngay
                 </a>
                 <a
-                  href="/account/privacy"
+                  href="/privacy"
                   className="bg-white/20 hover:bg-white/30 text-white font-bold px-6 py-3 rounded-xl transition-colors text-sm border border-white/30"
                 >
                   🖥️ Quản lý dữ liệu của tôi

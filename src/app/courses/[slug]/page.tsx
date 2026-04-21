@@ -156,6 +156,7 @@ function SectionAccordion({
 function PriceCard({
   course,
   enrolled,
+  enrollLoading,
   inCart,
   courseSlug,
   onEnroll,
@@ -163,6 +164,7 @@ function PriceCard({
 }: {
   course: ReturnType<typeof mockCourses.find> & object;
   enrolled: boolean;
+  enrollLoading: boolean;
   inCart: boolean;
   courseSlug: string;
   onEnroll: () => void;
@@ -214,9 +216,14 @@ function PriceCard({
           <>
             <button
               onClick={onEnroll}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-teal-600 py-3.5 text-sm font-bold text-white hover:bg-teal-700 active:scale-[0.99] transition-all shadow-sm shadow-teal-200 mb-3"
+              disabled={enrollLoading}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-teal-600 py-3.5 text-sm font-bold text-white hover:bg-teal-700 active:scale-[0.99] transition-all shadow-sm shadow-teal-200 mb-3 disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              <Zap className="h-4 w-4" /> Đăng ký ngay
+              {enrollLoading ? (
+                <><span className="h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin" /> Đang xử lý...</>
+              ) : (
+                <><Zap className="h-4 w-4" /> Đăng ký ngay</>
+              )}
             </button>
             {inCart ? (
               <Link
@@ -271,6 +278,7 @@ export default function CourseDetailPage({ params: paramsPromise }: { params: Pr
   const [openSections, setOpenSections] = useState<string[]>(["s1"]);
   const [activeTab, setActiveTab] = useState<"overview" | "curriculum" | "reviews">("overview");
   const [enrolled, setEnrolled] = useState(false);
+  const [enrollLoading, setEnrollLoading] = useState(false);
   const [wishlisted, setWishlisted] = useState(false);
   const [showAllSections, setShowAllSections] = useState(false);
 
@@ -288,12 +296,29 @@ export default function CourseDetailPage({ params: paramsPromise }: { params: Pr
       prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]
     );
 
-  const handleEnroll = () => {
+  const handleEnroll = async () => {
     if (!session) {
       window.location.href = `/login?callbackUrl=/courses/${course.slug}`;
       return;
     }
-    setEnrolled(true);
+    setEnrollLoading(true);
+    try {
+      const res = await fetch("/api/enroll", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ courseId: course.id }),
+      });
+      if (res.ok) {
+        setEnrolled(true);
+      } else {
+        const data = await res.json();
+        alert(data.error ?? "Đăng ký thất bại. Vui lòng thử lại.");
+      }
+    } catch {
+      alert("Đã xảy ra lỗi kết nối. Vui lòng thử lại.");
+    } finally {
+      setEnrollLoading(false);
+    }
   };
 
   const handleAddToCart = () => {
@@ -395,7 +420,7 @@ export default function CourseDetailPage({ params: paramsPromise }: { params: Pr
               {/* Right — price card on desktop */}
               <div className="hidden lg:block lg:col-span-1">
                 <div className="sticky top-20">
-                  <PriceCard course={course} enrolled={enrolled} inCart={hasItem(course.id)} courseSlug={course.slug} onEnroll={handleEnroll} onAddToCart={handleAddToCart} />
+                  <PriceCard course={course} enrolled={enrolled} enrollLoading={enrollLoading} inCart={hasItem(course.id)} courseSlug={course.slug} onEnroll={handleEnroll} onAddToCart={handleAddToCart} />
                 </div>
               </div>
             </div>
@@ -424,9 +449,14 @@ export default function CourseDetailPage({ params: paramsPromise }: { params: Pr
               <>
                 <button
                   onClick={handleEnroll}
-                  className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-teal-600 py-3 text-sm font-bold text-white hover:bg-teal-700 transition-colors"
+                  disabled={enrollLoading}
+                  className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-teal-600 py-3 text-sm font-bold text-white hover:bg-teal-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  <Zap className="h-4 w-4" /> Đăng ký ngay
+                  {enrollLoading ? (
+                    <><span className="h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin" /> Đang xử lý...</>
+                  ) : (
+                    <><Zap className="h-4 w-4" /> Đăng ký ngay</>
+                  )}
                 </button>
                 {hasItem(course.id) ? (
                   <Link
@@ -665,7 +695,7 @@ export default function CourseDetailPage({ params: paramsPromise }: { params: Pr
             {/* Sidebar — desktop price card */}
             <div className="hidden lg:block lg:col-span-1">
               <div className="sticky top-32">
-                <PriceCard course={course} enrolled={enrolled} inCart={hasItem(course.id)} courseSlug={course.slug} onEnroll={handleEnroll} onAddToCart={handleAddToCart} />
+                <PriceCard course={course} enrolled={enrolled} enrollLoading={enrollLoading} inCart={hasItem(course.id)} courseSlug={course.slug} onEnroll={handleEnroll} onAddToCart={handleAddToCart} />
 
                 {/* Share / Wishlist */}
                 <div className="flex gap-3 mt-3">

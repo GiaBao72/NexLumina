@@ -1,52 +1,107 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback, Suspense } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { mockCourses, categories, levelLabel, formatPrice } from "@/lib/mock-data";
+import { levelLabel, formatPrice } from "@/lib/mock-data";
 import Link from "next/link";
-import { Star, Clock, Search, SlidersHorizontal, X, Users, BookOpen, ArrowUpDown } from "lucide-react";
+import { useSearchParams, useRouter } from "next/navigation";
+import { Star, Clock, Search, SlidersHorizontal, X, Users, BookOpen, ArrowUpDown, PlayCircle } from "lucide-react";
 
-export default function CoursesPage() {
+interface ApiCourse {
+  id: string; title: string; slug: string; description: string;
+  thumbnail: string | null; price: number; salePrice: number | null;
+  level: string; status: string; featured: boolean;
+  totalLessons: number; totalDuration: number;
+  instructor: { name: string | null; image: string | null };
+  category: { name: string; slug: string };
+  _count: { enrollments: number; reviews: number };
+}
+interface ApiCategory { id: string; name: string; slug: string; icon: string | null }
+
+function CourseSkeleton() {
+  return (
+    <div className="rounded-2xl bg-white border border-gray-100 overflow-hidden animate-pulse">
+      <div className="aspect-video bg-gray-200" />
+      <div className="p-4 space-y-2">
+        <div className="h-3 bg-gray-200 rounded w-1/3" />
+        <div className="h-4 bg-gray-200 rounded w-3/4" />
+        <div className="h-3 bg-gray-200 rounded w-1/2" />
+        <div className="h-px bg-gray-100 my-2" />
+        <div className="flex justify-between"><div className="h-5 bg-gray-200 rounded w-1/4" /><div className="h-4 bg-gray-200 rounded w-1/5" /></div>
+      </div>
+    </div>
+  );
+}
+
+function CoursesPageInner() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  const [courses, setCourses] = useState<ApiCourse[]>([]);
+  const [categories, setCategories] = useState<ApiCategory[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [selectedCats, setSelectedCats] = useState<string[]>([]);
+  const [selectedCats, setSelectedCats] = useState<string[]>(() => {
+    const cat = searchParams.get("category");
+    return cat ? [cat] : [];
+  });
   const [selectedLevel, setSelectedLevel] = useState("");
   const [priceFilter, setPriceFilter] = useState("");
   const [showFilter, setShowFilter] = useState(false);
   const [sortBy, setSortBy] = useState("popular");
 
-  const filtered = useMemo(() => {
-    return mockCourses.filter((c) => {
-      const matchSearch =
-        !search ||
-        c.title.toLowerCase().includes(search.toLowerCase()) ||
-        c.instructor.toLowerCase().includes(search.toLowerCase()) ||
-        c.category.toLowerCase().includes(search.toLowerCase());
-      const matchCat = selectedCats.length === 0 || selectedCats.includes(c.categorySlug);
-      const matchLevel = !selectedLevel || c.level === selectedLevel;
-      const matchPrice =
-        !priceFilter ||
-        (priceFilter === "free" && c.price === 0) ||
-        (priceFilter === "paid" && c.price > 0);
-      return matchSearch && matchCat && matchLevel && matchPrice;
-    });
-  }, [search, selectedCats, selectedLevel, priceFilter]);
+  // Fetch courses from API
+  const fetchCourses = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (search) params.set("search", search);
+      if (selectedCats.length === 1) params.set("category", selectedCats[0]);
+      if (sortBy !== "price-asc" && sortBy !== "price-desc") params.set("sort", sortBy);
+      const res = await fetch(`/api/courses?${params}`);
+      if (res.ok) {
+        const data = await res.json();
+        setCourses(data.courses ?? []);
+      }
+    } catch {}
+    setLoading(false);
+  }, [search, selectedCats, sortBy]);
 
+  // Debounce search
+  useEffect(() => {
+    const t = setTimeout(fetchCourses, 300);
+    return () => clearTimeout(t);
+  }, [fetchCourses]);
+
+  // Fetch categories once
+  useEffect(() => {
+    fetch("/api/courses?sort=newest")
+      .then(r => r.ok ? r.json() : { courses: [] })
+      .then(data => {
+        const cats: Record<string, ApiCategory> = {};
+        (data.courses ?? []).forEach((c: ApiCourse) => {
+          if (!cats[c.category.slug]) cats[c.category.slug] = { id: c.category.slug, name: c.category.name, slug: c.category.slug, icon: null };
+        });
+        setCategories(Object.values(cats));
+      })
+      .catch(() => {});
+  }, []);
+
+  // Client-side sort for price
   const sorted = useMemo(() => {
-    return [...filtered].sort((a, b) => {
-      if (sortBy === "popular") return b.reviewCount - a.reviewCount;
-      if (sortBy === "rating") return b.rating - a.rating;
-      if (sortBy === "price-asc") return (a.salePrice ?? a.price) - (b.salePrice ?? b.price);
-      if (sortBy === "price-desc") return (b.salePrice ?? b.price) - (a.salePrice ?? a.price);
-      if (sortBy === "newest") return parseInt(b.id) - parseInt(a.id);
-      return 0;
-    });
-  }, [filtered, sortBy]);
+    let list = [...courses];
+    if (selectedLevel) list = list.filter(c => c.level === selectedLevel);
+    if (priceFilter === "free") list = list.filter(c => c.price === 0);
+    if (priceFilter === "paid") list = list.filter(c => c.price > 0);
+    if (sortBy === "price-asc") list.sort((a, b) => (a.salePrice ?? a.price) - (b.salePrice ?? b.price));
+    if (sortBy === "price-desc") list.sort((a, b) => (b.salePrice ?? b.price) - (a.salePrice ?? a.price));
+    if (sortBy === "rating") list.sort((a, b) => b._count.reviews - a._count.reviews);
+    return list;
+  }, [courses, selectedLevel, priceFilter, sortBy]);
 
   const toggleCat = (slug: string) => {
-    setSelectedCats((prev) =>
-      prev.includes(slug) ? prev.filter((s) => s !== slug) : [...prev, slug]
-    );
+    setSelectedCats(prev => prev.includes(slug) ? prev.filter(s => s !== slug) : [...prev, slug]);
   };
 
   const hasFilter = selectedCats.length > 0 || selectedLevel || priceFilter;
@@ -62,7 +117,7 @@ export default function CoursesPage() {
               Tất cả <span className="text-teal-400">khóa học</span>
             </h1>
             <p className="text-gray-400 text-lg mb-8 max-w-xl mx-auto">
-              {mockCourses.length}+ khóa học chất lượng cao từ các chuyên gia hàng đầu
+              Khóa học chất lượng cao từ các chuyên gia hàng đầu
             </p>
             <div className="relative max-w-xl mx-auto">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -85,7 +140,7 @@ export default function CoursesPage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
           {/* Mobile filter toggle */}
           <div className="flex items-center justify-between mb-6 lg:hidden">
-            <span className="text-sm text-gray-600">{filtered.length} khóa học</span>
+            <span className="text-sm text-gray-600">{sorted.length} khóa học</span>
             <button
               onClick={() => setShowFilter(!showFilter)}
               className="flex items-center gap-2 rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
@@ -109,27 +164,29 @@ export default function CoursesPage() {
                 )}
 
                 {/* Categories */}
-                <div>
-                  <h3 className="font-heading font-semibold text-gray-900 mb-3">Lĩnh vực</h3>
-                  <div className="space-y-2">
-                    {categories.map((cat) => (
-                      <label key={cat.slug} className="flex items-center gap-2.5 cursor-pointer group">
-                        <input
-                          type="checkbox"
-                          checked={selectedCats.includes(cat.slug)}
-                          onChange={() => toggleCat(cat.slug)}
-                          className="h-4 w-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
-                        />
-                        <span className="text-sm text-gray-700 group-hover:text-teal-600 transition-colors">
-                          {cat.icon} {cat.name}
-                        </span>
-                        <span className="ml-auto text-xs text-gray-400">
-                          {mockCourses.filter((c) => c.categorySlug === cat.slug).length}
-                        </span>
-                      </label>
-                    ))}
+                {categories.length > 0 && (
+                  <div>
+                    <h3 className="font-heading font-semibold text-gray-900 mb-3">Lĩnh vực</h3>
+                    <div className="space-y-2">
+                      {categories.map((cat) => (
+                        <label key={cat.slug} className="flex items-center gap-2.5 cursor-pointer group">
+                          <input
+                            type="checkbox"
+                            checked={selectedCats.includes(cat.slug)}
+                            onChange={() => toggleCat(cat.slug)}
+                            className="h-4 w-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+                          />
+                          <span className="text-sm text-gray-700 group-hover:text-teal-600 transition-colors">
+                            {cat.icon} {cat.name}
+                          </span>
+                          <span className="ml-auto text-xs text-gray-400">
+                            {courses.filter(c => c.category.slug === cat.slug).length}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* Level */}
                 <div>
@@ -177,7 +234,7 @@ export default function CoursesPage() {
             <div className="flex-1 min-w-0">
               <div className="hidden lg:flex items-center justify-between mb-6">
                 <span className="text-sm text-gray-600">
-                  <strong className="text-gray-900">{filtered.length}</strong> khóa học
+                  <strong className="text-gray-900">{sorted.length}</strong> khóa học
                 </span>
                 <div className="flex items-center gap-2">
                   <ArrowUpDown className="h-4 w-4 text-gray-400" />
@@ -195,7 +252,11 @@ export default function CoursesPage() {
                 </div>
               </div>
 
-              {filtered.length === 0 ? (
+              {loading ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                  {Array.from({ length: 6 }).map((_, i) => <CourseSkeleton key={i} />)}
+                </div>
+              ) : sorted.length === 0 ? (
                 <div className="text-center py-20">
                   <div className="text-5xl mb-4">🔍</div>
                   <h3 className="font-heading font-semibold text-gray-900 text-xl mb-2">Không tìm thấy khóa học</h3>
@@ -208,7 +269,7 @@ export default function CoursesPage() {
                   </button>
                 </div>
               ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
                   {sorted.map((course) => (
                     <Link
                       key={course.id}
@@ -216,38 +277,37 @@ export default function CoursesPage() {
                       className="group rounded-2xl bg-white border border-gray-100 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-200"
                     >
                       {/* Thumbnail */}
-                      <div className={`relative aspect-video bg-gradient-to-br ${course.gradient} flex items-center justify-center`}>
-                        <div className="text-white/20 text-7xl font-bold select-none">
-                          {course.title.charAt(0)}
-                        </div>
-                        {course.badge && (
-                          <span className={`absolute top-3 left-3 rounded-full px-2.5 py-0.5 text-xs font-bold text-white ${
-                            course.badge === "Miễn phí" ? "bg-green-500" :
-                            course.badge === "Mới" ? "bg-blue-500" :
-                            course.badge === "Nổi bật" ? "bg-yellow-500" : "bg-orange-500"
-                          }`}>
-                            {course.badge}
-                          </span>
+                      <div className="relative aspect-video bg-gradient-to-br from-teal-500 to-teal-700 flex items-center justify-center overflow-hidden">
+                        {course.thumbnail ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={course.thumbnail} alt={course.title} className="h-full w-full object-cover" />
+                        ) : (
+                          <div className="text-white/20 text-7xl font-bold select-none">{course.title.charAt(0)}</div>
+                        )}
+                        {course.featured && (
+                          <span className="absolute top-3 left-3 rounded-full px-2.5 py-0.5 text-xs font-bold text-white bg-yellow-500">Nổi bật</span>
+                        )}
+                        {course.price === 0 && (
+                          <span className="absolute top-3 left-3 rounded-full px-2.5 py-0.5 text-xs font-bold text-white bg-green-500">Miễn phí</span>
                         )}
                       </div>
 
                       {/* Content */}
                       <div className="p-4">
-                        <span className="text-xs text-teal-600 font-semibold uppercase tracking-wide">{course.category}</span>
+                        <span className="text-xs text-teal-600 font-semibold uppercase tracking-wide">{course.category.name}</span>
                         <h3 className="font-heading font-semibold text-gray-900 text-sm mt-1 mb-1.5 line-clamp-2 leading-snug group-hover:text-teal-600 transition-colors">
                           {course.title}
                         </h3>
-                        <p className="text-xs text-gray-500 mb-3">{course.instructor}</p>
+                        <p className="text-xs text-gray-500 mb-3">{course.instructor.name ?? "NexLumina"}</p>
 
                         <div className="flex items-center gap-3 text-xs text-gray-500 mb-3">
                           <span className="flex items-center gap-1">
                             <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                            <strong className="text-gray-800">{course.rating}</strong>
-                            <span>({course.reviewCount.toLocaleString()})</span>
+                            <span>({course._count.reviews.toLocaleString()})</span>
                           </span>
                           <span className="flex items-center gap-1">
                             <Users className="h-3 w-3" />
-                            {(course.reviewCount * 3).toLocaleString()}
+                            {course._count.enrollments.toLocaleString()}
                           </span>
                           <span className="flex items-center gap-1 ml-auto">
                             <BookOpen className="h-3 w-3" />
@@ -258,14 +318,14 @@ export default function CoursesPage() {
                         <div className="flex items-center justify-between pt-3 border-t border-gray-100">
                           <div className="flex items-center gap-2">
                             <span className={`font-bold text-base ${course.price === 0 ? "text-green-600" : "text-gray-900"}`}>
-                              {formatPrice(course.salePrice !== undefined && course.salePrice !== null ? course.salePrice : course.price)}
+                              {formatPrice(course.salePrice !== null ? course.salePrice : course.price)}
                             </span>
-                            {course.salePrice !== undefined && course.salePrice !== null && course.price > 0 && (
+                            {course.salePrice !== null && course.price > 0 && (
                               <span className="text-xs text-gray-400 line-through">{formatPrice(course.price)}</span>
                             )}
                           </div>
                           <span className="text-xs rounded-full bg-gray-100 text-gray-600 px-2 py-0.5">
-                            {levelLabel[course.level]}
+                            {levelLabel[course.level as keyof typeof levelLabel] ?? course.level}
                           </span>
                         </div>
                       </div>
@@ -279,5 +339,13 @@ export default function CoursesPage() {
       </main>
       <Footer />
     </div>
+  );
+}
+
+export default function CoursesPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><div className="text-gray-400">Đang tải...</div></div>}>
+      <CoursesPageInner />
+    </Suspense>
   );
 }

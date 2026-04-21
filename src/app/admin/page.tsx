@@ -1,134 +1,184 @@
 "use client";
-import { mockCourses, formatPrice } from "@/lib/mock-data";
-import { TrendingUp, TrendingDown, DollarSign, Users, BookOpen, ShoppingCart } from "lucide-react";
+import { useEffect, useState } from "react";
+import { TrendingUp, Users, BookOpen, ShoppingBag, DollarSign } from "lucide-react";
 
-const stats = [
-  { label: "Tổng doanh thu", value: "₫284.500.000", trend: "+12.5%", up: true, icon: DollarSign, color: "bg-teal-50 text-teal-600" },
-  { label: "Học viên mới", value: "1.248", trend: "+8.2%", up: true, icon: Users, color: "bg-blue-50 text-blue-600" },
-  { label: "Khóa học active", value: "12", trend: "+2", up: true, icon: BookOpen, color: "bg-purple-50 text-purple-600" },
-  { label: "Đơn hàng tháng này", value: "386", trend: "-3.1%", up: false, icon: ShoppingCart, color: "bg-orange-50 text-orange-600" },
-];
+type Stats = {
+  totalRevenue: number; revenueGrowth: number | null;
+  totalUsers: number; newUsersThisMonth: number;
+  totalCourses: number; publishedCourses: number;
+  totalOrders: number; ordersThisMonth: number;
+};
+type ChartPoint = { label: string; value: number };
+type Order = { id: string; userName: string | null; userEmail: string; courseTitle: string; total: number; status: string; createdAt: string };
+type Course = { id: string; title: string; instructor: string | null; enrollments: number; status: string };
 
-const chartData = [65, 40, 80, 55, 90, 70, 95];
-const chartDays = ["T2","T3","T4","T5","T6","T7","CN"];
-const maxBar = Math.max(...chartData);
+function formatVND(n: number) { return n.toLocaleString("vi-VN") + "₫"; }
+function fmt(d: string) { return new Date(d).toLocaleDateString("vi-VN"); }
+function initials(name?: string | null) {
+  if (!name) return "?";
+  return name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
+}
 
-const mockOrders = [
-  { id: "NL-10023", user: "Trần Minh Khoa", course: "React & Next.js", price: 1299000, status: "Hoàn thành" },
-  { id: "NL-10022", user: "Nguyễn Thu Hà", course: "UI/UX Design", price: 799000, status: "Hoàn thành" },
-  { id: "NL-10021", user: "Lê Văn Đức", course: "Python & Data", price: 1399000, status: "Đang xử lý" },
-  { id: "NL-10020", user: "Phạm Thùy Dung", course: "Digital Marketing", price: 499000, status: "Hoàn thành" },
-  { id: "NL-10019", user: "Vũ Minh Tuấn", course: "Flutter & Dart", price: 1099000, status: "Hoàn tiền" },
-];
+const statusColor: Record<string, string> = {
+  PAID: "bg-green-100 text-green-700", PENDING: "bg-yellow-100 text-yellow-700",
+  FAILED: "bg-red-100 text-red-700", REFUNDED: "bg-gray-100 text-gray-600",
+  PUBLISHED: "bg-teal-100 text-teal-700", DRAFT: "bg-yellow-100 text-yellow-700",
+  ARCHIVED: "bg-gray-100 text-gray-600",
+};
+const statusLabel: Record<string, string> = {
+  PAID: "Đã thanh toán", PENDING: "Chờ xử lý", FAILED: "Thất bại", REFUNDED: "Hoàn tiền",
+  PUBLISHED: "Đang bán", DRAFT: "Nháp", ARCHIVED: "Lưu trữ",
+};
 
 export default function AdminDashboard() {
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [chartData, setChartData] = useState<ChartPoint[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/admin/stats")
+      .then((r) => r.json())
+      .then((d) => {
+        setStats(d.stats); setChartData(d.chartData);
+        setOrders(d.latestOrders); setCourses(d.topCourses);
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  const maxChart = Math.max(...chartData.map((c) => c.value), 1);
+  const allZero = chartData.every((c) => c.value === 0);
+
+  const statCards = stats ? [
+    { label: "Tổng doanh thu", value: formatVND(stats.totalRevenue), icon: DollarSign, color: "bg-teal-50 text-teal-600", trend: stats.revenueGrowth },
+    { label: "Học viên mới tháng này", value: stats.newUsersThisMonth.toLocaleString(), sub: `/${stats.totalUsers.toLocaleString()} tổng`, icon: Users, color: "bg-blue-50 text-blue-600", trend: null },
+    { label: "Khóa học đang bán", value: stats.publishedCourses.toLocaleString(), sub: `/${stats.totalCourses.toLocaleString()} tổng`, icon: BookOpen, color: "bg-purple-50 text-purple-600", trend: null },
+    { label: "Đơn hàng tháng này", value: stats.ordersThisMonth.toLocaleString(), sub: `/${stats.totalOrders.toLocaleString()} tổng`, icon: ShoppingBag, color: "bg-orange-50 text-orange-600", trend: null },
+  ] : [];
+
+  if (loading) return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {[...Array(4)].map((_, i) => <div key={i} className="h-28 rounded-2xl bg-gray-100 animate-pulse" />)}
+      </div>
+      <div className="h-64 rounded-2xl bg-gray-100 animate-pulse" />
+      <div className="grid lg:grid-cols-2 gap-6">
+        <div className="h-80 rounded-2xl bg-gray-100 animate-pulse" />
+        <div className="h-80 rounded-2xl bg-gray-100 animate-pulse" />
+      </div>
+    </div>
+  );
+
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-heading text-2xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-sm text-gray-500 mt-0.5">Tổng quan hoạt động hôm nay</p>
+        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+        <p className="text-sm text-gray-500 mt-1">Tổng quan hoạt động hệ thống</p>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        {stats.map((s, i) => (
-          <div key={i} className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
-            <div className="flex items-center justify-between mb-3">
-              <div className={`h-10 w-10 rounded-xl ${s.color} flex items-center justify-center`}>
-                <s.icon className="h-5 w-5" />
-              </div>
-              <span className={`flex items-center gap-0.5 text-xs font-semibold ${s.up ? "text-green-600" : "text-red-500"}`}>
-                {s.up ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                {s.trend}
-              </span>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {statCards.map((c) => (
+          <div key={c.label} className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+            <div className={`inline-flex h-10 w-10 items-center justify-center rounded-xl ${c.color} mb-3`}>
+              <c.icon className="h-5 w-5" />
             </div>
-            <div className="font-heading text-xl font-bold text-gray-900">{s.value}</div>
-            <div className="text-xs text-gray-500 mt-0.5">{s.label}</div>
+            <p className="text-xs text-gray-500 mb-1">{c.label}</p>
+            <p className="text-xl font-bold text-gray-900">{c.value}</p>
+            {c.sub && <p className="text-xs text-gray-400 mt-0.5">{c.sub}</p>}
+            {c.trend != null && (
+              <span className={`inline-flex items-center gap-1 text-xs mt-1 font-medium ${c.trend >= 0 ? "text-green-600" : "text-red-500"}`}>
+                <TrendingUp className="h-3 w-3" />{c.trend >= 0 ? "+" : ""}{c.trend}% so tháng trước
+              </span>
+            )}
           </div>
         ))}
       </div>
 
-      {/* Chart + recent orders */}
-      <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
-        {/* Bar chart */}
-        <div className="xl:col-span-3 bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="font-heading font-semibold text-gray-900">Doanh thu 7 ngày qua</h2>
-              <p className="text-xs text-gray-400 mt-0.5">triệu đồng</p>
-            </div>
-            <span className="text-xs text-green-600 font-semibold bg-green-50 px-2.5 py-1 rounded-full">+18% tuần này</span>
-          </div>
-          <div className="flex items-end gap-3 h-40">
-            {chartData.map((v, i) => (
-              <div key={i} className="flex-1 flex flex-col items-center gap-1.5">
-                <span className="text-xs text-gray-400">{Math.round(v*4)}tr</span>
-                <div className="w-full rounded-t-lg bg-teal-500 transition-all hover:bg-teal-400" style={{ height: `${(v / maxBar) * 120}px` }} />
-                <span className="text-xs text-gray-500">{chartDays[i]}</span>
+      {/* Chart */}
+      <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+        <h2 className="text-sm font-semibold text-gray-700 mb-4">Doanh thu 7 ngày qua</h2>
+        {allZero ? (
+          <div className="h-40 flex items-center justify-center text-sm text-gray-400">Chưa có dữ liệu đơn hàng</div>
+        ) : (
+          <div className="flex items-end gap-2 h-40">
+            {chartData.map((d) => (
+              <div key={d.label} className="flex-1 flex flex-col items-center gap-1 group">
+                <div className="relative w-full">
+                  <div
+                    className="w-full rounded-t-lg bg-teal-500 group-hover:bg-teal-600 transition-colors cursor-default"
+                    style={{ height: `${Math.max((d.value / maxChart) * 120, 4)}px` }}
+                    title={formatVND(d.value)}
+                  />
+                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-[10px] rounded px-1.5 py-0.5 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                    {formatVND(d.value)}
+                  </div>
+                </div>
+                <span className="text-[11px] text-gray-400">{d.label}</span>
               </div>
             ))}
           </div>
-        </div>
-
-        {/* Recent orders */}
-        <div className="xl:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="px-5 py-4 border-b border-gray-100">
-            <h2 className="font-heading font-semibold text-gray-900">Đơn hàng gần đây</h2>
-          </div>
-          <div className="divide-y divide-gray-50">
-            {mockOrders.map(o => (
-              <div key={o.id} className="px-5 py-3 flex items-center gap-3">
-                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-teal-500 to-teal-700 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                  {o.user.split(" ").pop()![0]}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-gray-900 truncate">{o.user}</p>
-                  <p className="text-xs text-gray-400 truncate">{o.course}</p>
-                </div>
-                <div className="text-right flex-shrink-0">
-                  <p className="text-xs font-semibold text-gray-900">{formatPrice(o.price)}</p>
-                  <span className={`text-xs rounded-full px-1.5 py-0.5 font-medium ${
-                    o.status==="Hoàn thành"?"text-green-600 bg-green-50":
-                    o.status==="Đang xử lý"?"text-blue-600 bg-blue-50":"text-red-500 bg-red-50"
-                  }`}>{o.status}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        )}
       </div>
 
-      {/* Top courses */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-100">
-          <h2 className="font-heading font-semibold text-gray-900">Khóa học nổi bật</h2>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50">
-              <tr>{["Khóa học","Giảng viên","Học viên","Doanh thu","Trạng thái"].map(h=>(
-                <th key={h} className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">{h}</th>
-              ))}</tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {mockCourses.slice(0,5).map((c,i)=>(
-                <tr key={c.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-5 py-3.5">
-                    <div className="flex items-center gap-3">
-                      <div className={`h-8 w-8 rounded-lg bg-gradient-to-br ${c.gradient} flex-shrink-0`}/>
-                      <span className="text-sm font-medium text-gray-900 max-w-[180px] truncate">{c.title}</span>
-                    </div>
-                  </td>
-                  <td className="px-5 py-3.5 text-gray-500 text-xs whitespace-nowrap">{c.instructor}</td>
-                  <td className="px-5 py-3.5 text-gray-700">{(c.reviewCount*3).toLocaleString()}</td>
-                  <td className="px-5 py-3.5 font-semibold text-gray-900">{formatPrice((c.salePrice??c.price)*(100+i*30))}</td>
-                  <td className="px-5 py-3.5">
-                    <span className="rounded-full bg-green-100 text-green-700 px-2.5 py-0.5 text-xs font-semibold">Đang bán</span>
-                  </td>
-                </tr>
+      <div className="grid lg:grid-cols-2 gap-6">
+        {/* Recent orders */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className="px-5 py-4 border-b border-gray-100">
+            <h2 className="text-sm font-semibold text-gray-700">Đơn hàng gần đây</h2>
+          </div>
+          {orders.length === 0 ? (
+            <div className="px-5 py-10 text-center text-sm text-gray-400">Chưa có đơn hàng nào</div>
+          ) : (
+            <div className="divide-y divide-gray-50">
+              {orders.map((o) => (
+                <div key={o.id} className="flex items-center gap-3 px-5 py-3">
+                  <div className="h-8 w-8 rounded-full bg-teal-600 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
+                    {initials(o.userName)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">{o.userName ?? o.userEmail}</p>
+                    <p className="text-xs text-gray-400 truncate">{o.courseTitle}</p>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className="text-sm font-semibold text-gray-900">{formatVND(o.total)}</p>
+                    <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${statusColor[o.status] ?? "bg-gray-100 text-gray-600"}`}>
+                      {statusLabel[o.status] ?? o.status}
+                    </span>
+                  </div>
+                </div>
               ))}
-            </tbody>
-          </table>
+            </div>
+          )}
+        </div>
+
+        {/* Top courses */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className="px-5 py-4 border-b border-gray-100">
+            <h2 className="text-sm font-semibold text-gray-700">Khóa học nổi bật</h2>
+          </div>
+          {courses.length === 0 ? (
+            <div className="px-5 py-10 text-center text-sm text-gray-400">Chưa có khóa học nào</div>
+          ) : (
+            <div className="divide-y divide-gray-50">
+              {courses.map((c, i) => (
+                <div key={c.id} className="flex items-center gap-3 px-5 py-3">
+                  <span className="text-sm font-bold text-gray-300 w-5 text-center">{i + 1}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">{c.title}</p>
+                    <p className="text-xs text-gray-400">{c.instructor}</p>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className="text-sm font-semibold text-gray-700">{c.enrollments.toLocaleString()} HV</p>
+                    <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${statusColor[c.status] ?? "bg-gray-100 text-gray-600"}`}>
+                      {statusLabel[c.status] ?? c.status}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

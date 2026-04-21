@@ -2,14 +2,16 @@
 
 import React, { useState, use } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { mockCourses } from "@/lib/mock-data";
 import {
   PlayCircle, CheckCircle2, ChevronDown, ChevronLeft,
   Menu, X, BookOpen, MessageSquare, FileText, Star,
-  Lock, Volume2, Maximize2, Settings2, SkipForward, SkipBack,
+  Lock,
   ThumbsUp, Share2, RotateCcw, Download, AlertCircle,
   ChevronRight, GraduationCap, Clock, Check,
 } from "lucide-react";
+import BunnyPlayer from "@/components/BunnyPlayer";
 
 /* ─── Mock data ───────────────────────────────────────────────────────────────── */
 const mockSections = [
@@ -86,6 +88,7 @@ function LessonSidebar({
   const [newNote, setNewNote] = useState("");
   const [notes, setNotes] = useState(mockNotes);
   const [newQuestion, setNewQuestion] = useState("");
+  const [qaList, setQaList] = useState(mockQA);
 
   const toggleSection = (id: string) =>
     setOpenSections((p) => (p.includes(id) ? p.filter((s) => s !== id) : [...p, id]));
@@ -248,12 +251,22 @@ function LessonSidebar({
                 rows={3}
                 className="w-full rounded-lg border border-gray-200 px-3 py-2 text-xs focus:outline-none focus:border-teal-400 resize-none"
               />
-              <button className="w-full rounded-lg bg-teal-600 py-2 text-xs font-medium text-white hover:bg-teal-700 transition-colors">
+              <button
+                onClick={() => {
+                  if (newQuestion.trim()) {
+                    setQaList((p) => [
+                      { id: Date.now().toString(), user: "Bạn", avatar: "BN", time: "Vừa xong", question: newQuestion.trim(), answer: null, answerBy: null },
+                      ...p,
+                    ]);
+                    setNewQuestion("");
+                  }
+                }}
+                className="w-full rounded-lg bg-teal-600 py-2 text-xs font-medium text-white hover:bg-teal-700 transition-colors">
                 Gửi câu hỏi
               </button>
             </div>
             <div className="space-y-4">
-              {mockQA.map((qa) => (
+              {qaList.map((qa) => (
                 <div key={qa.id} className="rounded-xl border border-gray-100 bg-gray-50 p-3 space-y-3">
                   <div className="flex items-start gap-2">
                     <div className="h-6 w-6 rounded-full bg-teal-100 flex items-center justify-center text-teal-700 text-[10px] font-bold flex-shrink-0">
@@ -290,6 +303,7 @@ function LessonSidebar({
 /* ─── Main Page ───────────────────────────────────────────────────────────────── */
 export default function LearnPage({ params: paramsPromise }: { params: Promise<{ courseSlug: string; lessonSlug: string }> }) {
   const params = use(paramsPromise);
+  const router = useRouter();
   const course = mockCourses.find((c) => c.slug === params.courseSlug) ?? mockCourses[0];
   const currentLesson = allLessons.find((l) => l.slug === params.lessonSlug) ?? allLessons[0];
   const currentIndex = allLessons.findIndex((l) => l.id === currentLesson.id);
@@ -300,8 +314,19 @@ export default function LearnPage({ params: paramsPromise }: { params: Promise<{
     allLessons.filter((l) => l.completed).map((l) => l.id)
   );
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [isPlaying, setIsPlaying] = useState(false);
   const [liked, setLiked] = useState(false);
+  const [shareToast, setShareToast] = useState(false);
+
+  const handleShareLesson = () => {
+    navigator.clipboard.writeText(window.location.href).then(() => {
+      setShareToast(true);
+      setTimeout(() => setShareToast(false), 2000);
+    });
+  };
+
+  const handleDownload = () => {
+    alert("Tài liệu đang được cập nhật");
+  };
 
   const totalCompleted = completedLessons.length;
   const progress = Math.round((totalCompleted / allLessons.length) * 100);
@@ -374,79 +399,11 @@ export default function LearnPage({ params: paramsPromise }: { params: Promise<{
         <div className={`flex flex-col flex-1 min-w-0 overflow-y-auto bg-gray-950 transition-all duration-200`}>
           {/* Video player */}
           <div className="flex-shrink-0">
-            <div className="relative w-full bg-black" style={{ aspectRatio: "16/9" }}>
-              {/* Placeholder video player */}
-              <div
-                className={`absolute inset-0 flex flex-col items-center justify-center cursor-pointer select-none bg-gradient-to-br ${course.gradient}`}
-                onClick={() => setIsPlaying(!isPlaying)}
-              >
-                <div className="absolute inset-0 bg-black/40" />
-                {!isPlaying && (
-                  <div className="relative flex flex-col items-center gap-3">
-                    <div className="h-20 w-20 rounded-full bg-white/20 backdrop-blur-sm border-2 border-white/40 flex items-center justify-center hover:bg-white/30 transition-colors">
-                      <PlayCircle className="h-10 w-10 text-white" />
-                    </div>
-                    <p className="text-white/80 text-sm font-medium">{currentLesson.title}</p>
-                    <p className="text-white/60 text-xs">{currentLesson.duration}</p>
-                  </div>
-                )}
-                {isPlaying && (
-                  <div className="relative flex flex-col items-center gap-2">
-                    <div className="h-16 w-16 rounded-full bg-white/10 flex items-center justify-center">
-                      <div className="flex gap-1.5">
-                        <div className="h-7 w-2 bg-white rounded-sm animate-pulse" />
-                        <div className="h-7 w-2 bg-white rounded-sm animate-pulse [animation-delay:0.2s]" />
-                      </div>
-                    </div>
-                    <p className="text-white/60 text-xs">Đang phát...</p>
-                  </div>
-                )}
-              </div>
-
-              {/* Video controls bar */}
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent px-4 py-3">
-                {/* Progress bar */}
-                <div className="h-1 w-full rounded-full bg-white/20 mb-3 cursor-pointer hover:h-1.5 transition-all">
-                  <div className="h-full w-1/3 rounded-full bg-teal-400" />
-                </div>
-                <div className="flex items-center gap-3">
-                  <button onClick={() => setIsPlaying(!isPlaying)} className="text-white hover:text-teal-300 transition-colors">
-                    {isPlaying ? (
-                      <div className="flex gap-0.5">
-                        <div className="h-4 w-1.5 bg-current rounded-sm" />
-                        <div className="h-4 w-1.5 bg-current rounded-sm" />
-                      </div>
-                    ) : (
-                      <PlayCircle className="h-5 w-5" />
-                    )}
-                  </button>
-                  {prevLesson && (
-                    <Link href={`/learn/${course.slug}/${prevLesson.slug}`} className="text-white hover:text-teal-300 transition-colors">
-                      <SkipBack className="h-4 w-4" />
-                    </Link>
-                  )}
-                  {nextLesson && (
-                    <Link href={`/learn/${course.slug}/${nextLesson.slug}`} className="text-white hover:text-teal-300 transition-colors">
-                      <SkipForward className="h-4 w-4" />
-                    </Link>
-                  )}
-                  <button className="text-white hover:text-teal-300 transition-colors">
-                    <Volume2 className="h-4 w-4" />
-                  </button>
-                  <span className="text-white/60 text-xs ml-1">00:00 / {currentLesson.duration}</span>
-                  <div className="flex-1" />
-                  <button className="text-white/70 hover:text-white text-xs transition-colors">0.75x</button>
-                  <button className="text-white font-semibold text-xs transition-colors border-b border-white">1x</button>
-                  <button className="text-white/70 hover:text-white text-xs transition-colors">1.5x</button>
-                  <button className="text-white hover:text-teal-300 transition-colors">
-                    <Settings2 className="h-4 w-4" />
-                  </button>
-                  <button className="text-white hover:text-teal-300 transition-colors">
-                    <Maximize2 className="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
-            </div>
+            <BunnyPlayer
+              lessonSlug={currentLesson.slug}
+              lessonTitle={currentLesson.title}
+              isFree={currentLesson.isFree}
+            />
           </div>
 
           {/* ── Lesson content below player ── */}
@@ -480,7 +437,7 @@ export default function LearnPage({ params: paramsPromise }: { params: Promise<{
                   <ThumbsUp className={`h-3.5 w-3.5 ${liked ? "fill-teal-400" : ""}`} />
                   Thích
                 </button>
-                <button className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs text-gray-400 hover:text-white hover:bg-gray-800 transition-colors">
+                <button onClick={handleShareLesson} className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs text-gray-400 hover:text-white hover:bg-gray-800 transition-colors">
                   <Share2 className="h-3.5 w-3.5" />
                   Chia sẻ
                 </button>
@@ -512,6 +469,7 @@ export default function LearnPage({ params: paramsPromise }: { params: Promise<{
                 ].map((r) => (
                   <button
                     key={r.name}
+                    onClick={handleDownload}
                     className="flex items-center gap-3 w-full rounded-lg border border-gray-700 px-3 py-2.5 hover:border-teal-600/50 hover:bg-teal-900/10 transition-colors group"
                   >
                     <Download className="h-4 w-4 text-gray-500 group-hover:text-teal-400 transition-colors flex-shrink-0" />
@@ -544,10 +502,13 @@ export default function LearnPage({ params: paramsPromise }: { params: Promise<{
                   <ChevronRight className="h-4 w-4 flex-shrink-0" />
                 </Link>
               ) : (
-                <div className="flex items-center gap-2 rounded-xl bg-orange-500 px-4 py-2.5 text-sm font-semibold text-white ml-auto">
+                <Link
+                  href="/profile?tab=certs"
+                  className="flex items-center gap-2 rounded-xl bg-orange-500 px-4 py-2.5 text-sm font-semibold text-white ml-auto hover:bg-orange-600 transition-colors"
+                >
                   <GraduationCap className="h-4 w-4" />
                   Nhận chứng chỉ
-                </div>
+                </Link>
               )}
             </div>
           </div>
@@ -566,6 +527,11 @@ export default function LearnPage({ params: paramsPromise }: { params: Promise<{
           </div>
         )}
       </div>
+      {shareToast && (
+        <div className="fixed bottom-4 right-4 z-50 bg-gray-900 text-white px-4 py-2 rounded-xl text-sm shadow-lg">
+          Đã sao chép đường dẫn!
+        </div>
+      )}
     </div>
   );
 }

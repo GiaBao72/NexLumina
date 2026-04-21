@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -18,6 +19,7 @@ const DISCOUNT_RATE = 0.2;
 function CheckoutInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { data: session } = useSession();
   const appliedDiscount = searchParams.get("discount") === DISCOUNT_CODE ? DISCOUNT_CODE : "";
 
   const { items, subtotal, clearCart } = useCart();
@@ -27,19 +29,55 @@ function CheckoutInner() {
   const [method, setMethod] = useState<PayMethod>("card");
   const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState({ name: "Học Viên Demo", email: "demo@nexlumina.com", phone: "" });
+  const [form, setForm] = useState({ name: "", email: "", phone: "" });
+
+  // Populate form from session once available
+  useEffect(() => {
+    const user = session?.user;
+    if (user) {
+      setForm((f) => ({
+        ...f,
+        name: f.name || user.name || "",
+        email: f.email || user.email || "",
+      }));
+    }
+  }, [session]);
 
   const handleOrder = async () => {
     if (!agreed || items.length === 0) return;
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 1500));
-    const orderId = `NL-${new Date().getFullYear()}-${Math.floor(10000 + Math.random() * 90000)}`;
-    sessionStorage.setItem(
-      "nexlumina_last_order",
-      JSON.stringify({ orderId, items, total, email: form.email }),
-    );
-    clearCart();
-    router.push("/order-success");
+    try {
+      const res = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: items.map((i) => ({
+            id: i.id,
+            price: i.salePrice !== undefined && i.salePrice !== null ? i.salePrice : i.price,
+          })),
+          total,
+          paymentMethod: method,
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Lỗi không xác định" }));
+        alert(err.error ?? "Đặt hàng thất bại. Vui lòng thử lại.");
+        setLoading(false);
+        return;
+      }
+
+      const data = await res.json();
+      sessionStorage.setItem(
+        "nexlumina_last_order",
+        JSON.stringify({ orderId: data.orderId, items, total, email: form.email }),
+      );
+      clearCart();
+      router.push("/order-success");
+    } catch {
+      alert("Không thể kết nối server. Vui lòng thử lại.");
+      setLoading(false);
+    }
   };
 
   if (items.length === 0) {

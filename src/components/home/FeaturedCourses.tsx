@@ -1,82 +1,9 @@
 import Link from "next/link";
-import { Star, Clock, Users, PlayCircle } from "lucide-react";
+import { Star, Clock, PlayCircle } from "lucide-react";
+import { mockCourses, formatPrice } from "@/lib/mock-data";
 
-const courses = [
-  {
-    id: "1",
-    title: "React & Next.js từ 0 đến Pro",
-    instructor: "Nguyễn Văn Minh",
-    category: "Lập trình Web",
-    rating: 4.9,
-    students: 3240,
-    lessons: 42,
-    duration: "18h",
-    price: 1299000,
-    salePrice: 649000,
-    level: "Beginner",
-    badge: "Bán chạy",
-    badgeColor: "bg-orange-500",
-    gradient: "from-blue-600 to-teal-500",
-  },
-  {
-    id: "2",
-    title: "UI/UX Design Masterclass với Figma",
-    instructor: "Trần Thị Lan",
-    category: "Thiết kế",
-    rating: 4.8,
-    students: 2100,
-    lessons: 38,
-    duration: "22h",
-    price: 1499000,
-    salePrice: 799000,
-    level: "Intermediate",
-    badge: "Mới",
-    badgeColor: "bg-teal-600",
-    gradient: "from-purple-600 to-pink-500",
-  },
-  {
-    id: "3",
-    title: "Python & Data Science cho người mới",
-    instructor: "Lê Hoàng Nam",
-    category: "Data Science",
-    rating: 4.9,
-    students: 1850,
-    lessons: 55,
-    duration: "25h",
-    price: 1399000,
-    salePrice: null,
-    level: "Beginner",
-    badge: "Nổi bật",
-    badgeColor: "bg-yellow-500",
-    gradient: "from-green-600 to-teal-500",
-  },
-  {
-    id: "4",
-    title: "Digital Marketing toàn diện 2025",
-    instructor: "Phạm Thị Hương",
-    category: "Marketing",
-    rating: 4.7,
-    students: 1620,
-    lessons: 31,
-    duration: "15h",
-    price: 999000,
-    salePrice: 499000,
-    level: "Beginner",
-    badge: "Bán chạy",
-    badgeColor: "bg-orange-500",
-    gradient: "from-orange-500 to-red-500",
-  },
-];
-
-const levelLabel: Record<string, string> = {
-  Beginner: "Cơ bản",
-  Intermediate: "Trung cấp",
-  Advanced: "Nâng cao",
-};
-
-function formatPrice(n: number) {
-  return n.toLocaleString("vi-VN") + "₫";
-}
+// Chỉ lấy 4 khóa featured đầu tiên
+const featured = mockCourses.filter((c) => c.featured).slice(0, 4);
 
 export default function FeaturedCourses() {
   return (
@@ -98,18 +25,20 @@ export default function FeaturedCourses() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {courses.map((c) => (
+          {featured.map((c) => (
             <Link
               key={c.id}
-              href={`/courses/${c.id}`}
+              href={`/courses/${c.slug}`}
               className="group rounded-2xl bg-white border border-gray-100 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-200"
             >
               {/* Thumbnail */}
               <div className={`relative aspect-video bg-gradient-to-br ${c.gradient} flex items-center justify-center`}>
                 <PlayCircle className="h-12 w-12 text-white/70 group-hover:text-white transition-colors" />
-                <span className={`absolute top-3 left-3 rounded-full ${c.badgeColor} px-2.5 py-0.5 text-xs font-bold text-white`}>
-                  {c.badge}
-                </span>
+                {c.badge && (
+                  <span className="absolute top-3 left-3 rounded-full bg-orange-500 px-2.5 py-0.5 text-xs font-bold text-white">
+                    {c.badge}
+                  </span>
+                )}
               </div>
 
               {/* Content */}
@@ -124,13 +53,11 @@ export default function FeaturedCourses() {
                   <span className="flex items-center gap-1">
                     <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
                     <strong className="text-gray-800">{c.rating}</strong>
-                    <span>({c.students.toLocaleString()})</span>
+                    <span>({c.reviewCount.toLocaleString()})</span>
                   </span>
-                  <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{c.duration}</span>
-                </div>
-
-                <div className="flex items-center gap-1 mb-1">
-                  <span className="text-xs rounded-full bg-gray-100 text-gray-600 px-2 py-0.5">{levelLabel[c.level]}</span>
+                  <span className="flex items-center gap-1">
+                    <Clock className="h-3 w-3" />{c.totalDuration}
+                  </span>
                 </div>
 
                 <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100">
