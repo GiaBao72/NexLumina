@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Providers from "@/components/Providers";
 import { Plus_Jakarta_Sans, DM_Sans, JetBrains_Mono } from "next/font/google";
 import "@/styles/globals.css";
 
@@ -58,7 +59,7 @@ export default function RootLayout({
       <body
         className={`${plusJakartaSans.variable} ${dmSans.variable} ${jetbrainsMono.variable} font-body antialiased`}
       >
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
