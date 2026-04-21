@@ -8,16 +8,15 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const khamPhaLinks: { label: string; href: string }[] = [
   { label: "Khóa học", href: "/courses" },
-  { label: "Lộ trình học", href: "/courses" },
-  { label: "Blog", href: "/courses" },
-  { label: "Giảng viên", href: "/courses" },
+  { label: "Lộ trình học", href: "/roadmap" },
+  { label: "Blog", href: "/blog" },
 ];
 
 const hoTroLinks: { label: string; href: string }[] = [
-  { label: "Trung tâm trợ giúp", href: "/" },
-  { label: "Chính sách hoàn tiền", href: "/" },
+  { label: "Trung tâm trợ giúp", href: "/help" },
+  { label: "Chính sách hoàn tiền", href: "/refund-policy" },
   { label: "Điều khoản dịch vụ", href: "/terms" },
-  { label: "Liên hệ", href: "/" },
+  { label: "Liên hệ", href: "/contact" },
 ];
 
 export default function Footer() {
