@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Search, Plus, Pencil, Archive, ChevronLeft, ChevronRight, X, Trash2, BookOpen } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Search, Plus, Pencil, Archive, ChevronLeft, ChevronRight, X, Trash2, BookOpen, Eye } from "lucide-react";
 
 type Course = {
   id: string; title: string; slug: string; price: number; salePrice: number | null;
@@ -29,6 +30,7 @@ const emptyForm = {
 };
 
 export default function AdminCoursesPage() {
+  const router = useRouter();
   const [courses, setCourses] = useState<Course[]>([]);
   const [meta, setMeta] = useState<Meta>({ total: 0, page: 1, totalPages: 1 });
   const [stats, setStats] = useState<CourseStats>({ total: 0, published: 0, draft: 0, archived: 0 });
@@ -298,6 +300,9 @@ export default function AdminCoursesPage() {
                     </td>
                     <td className="px-3 py-3">
                       <div className="flex items-center gap-1 justify-end">
+                        <button onClick={() => router.push(`/admin/courses/${c.id}`)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-blue-600 transition-colors" title="Chi tiết">
+                          <Eye className="h-3.5 w-3.5" />
+                        </button>
                         <button onClick={() => openEdit(c)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-teal-600 transition-colors" title="Sửa">
                           <Pencil className="h-3.5 w-3.5" />
                         </button>

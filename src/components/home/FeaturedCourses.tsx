@@ -8,6 +8,14 @@ import type { Course } from "@/types";
 function formatPrice(price: number) {
   return price === 0 ? "Miễn phí" : price.toLocaleString("vi-VN") + "₫";
 }
+function fmtDur(min: number | string | null): string {
+  if (!min) return "";
+  if (typeof min === "string") return min;
+  const h = Math.floor(min / 60), m = min % 60;
+  if (h > 0 && m > 0) return `${h}g${m}p`;
+  if (h > 0) return `${h} giờ`;
+  return `${m} phút`;
+}
 
 export default function FeaturedCourses() {
   const [courses, setCourses] = useState<Course[]>([]);
@@ -94,7 +102,12 @@ export default function FeaturedCourses() {
                         </span>
                         {c.totalDuration && (
                           <span className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />{c.totalDuration}
+                            <Clock className="h-3 w-3" />{fmtDur(c.totalDuration)}
+                          </span>
+                        )}
+                        {!c.totalDuration && c.totalLessons > 0 && (
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-3 w-3" />{c.totalLessons} bài
                           </span>
                         )}
                       </div>

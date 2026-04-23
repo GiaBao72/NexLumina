@@ -13,8 +13,18 @@ interface ApiCourse {
   thumbnail: string | null; price: number; salePrice: number | null;
   level: string; status: string; featured: boolean;
   totalLessons: number; totalDuration: number;
+  fakeRating: number | null; fakeReviews: number | null; fakeStudents: number | null;
+  badge: string | null;
   category: { name: string; slug: string };
   _count: { enrollments: number; reviews: number };
+}
+
+function fmtDur(min: number): string {
+  if (!min || min <= 0) return "";
+  const h = Math.floor(min / 60), m = min % 60;
+  if (h > 0 && m > 0) return `${h}g${m}p`;
+  if (h > 0) return `${h} giờ`;
+  return `${m} phút`;
 }
 interface ApiCategory { id: string; name: string; slug: string; icon: string | null }
 
@@ -311,6 +321,12 @@ function CoursesPageInner() {
                             <BookOpen className="h-3 w-3" />
                             {course.totalLessons} bài
                           </span>
+                          {course.totalDuration > 0 && (
+                            <span className="flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              {fmtDur(course.totalDuration)}
+                            </span>
+                          )}
                         </div>
 
                         <div className="flex items-center justify-between pt-3 border-t border-gray-100">

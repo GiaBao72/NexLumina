@@ -35,8 +35,8 @@ export async function GET(req: NextRequest) {
       where,
       orderBy,
       include: {
-        category:   { select: { name: true, slug: true } },
-        _count:     { select: { enrollments: true, reviews: true } },
+        category:    { select: { name: true, slug: true } },
+        _count:      { select: { enrollments: true, reviews: true } },
       },
     });
 
