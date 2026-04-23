@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
-import { BookOpen, BarChart2, Users, ShoppingCart, Settings, LogOut, Menu, Bell, Film, Tag, GraduationCap, Upload } from "lucide-react";
+import { BookOpen, BarChart2, Users, ShoppingCart, Settings, LogOut, Menu, Bell, Film, Tag, GraduationCap, Upload, Home } from "lucide-react";
 
 const navItems = [
   { href: "/admin", icon: BarChart2, label: "Dashboard" },
@@ -88,6 +88,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         >
           <LogOut className="h-4 w-4" />Đăng xuất
         </button>
+        <Link
+          href="/"
+          className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-gray-400 hover:bg-gray-800 hover:text-white transition-colors mt-1"
+        >
+          <Home className="h-4 w-4" />Về trang chủ
+        </Link>
       </div>
     </div>
   );
