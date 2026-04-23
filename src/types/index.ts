@@ -1,4 +1,4 @@
-// Course types
+// ─── Course ──────────────────────────────────────────────────────────────────
 export interface Course {
   id: string;
   title: string;
@@ -12,14 +12,22 @@ export interface Course {
   language: string;
   status: "DRAFT" | "PUBLISHED" | "ARCHIVED";
   featured: boolean;
-  totalDuration: number;
+  badge: string | null;
+  totalDuration: number | string | null; // số phút (DB) hoặc string "X giờ" (API format)
   totalLessons: number;
+  fakeRating: number | null;
+  fakeReviews: number | null;
+  fakeStudents: number | null;
   categoryId: string;
   instructorId: string;
-  createdAt: Date;
-  updatedAt: Date;
+  category: { id: string; name: string; slug: string } | null;
+  instructor: { id: string; name: string } | null;
+  _count?: { enrollments: number; reviews: number };
+  createdAt: Date | string;
+  updatedAt: Date | string;
 }
 
+// ─── Lesson ───────────────────────────────────────────────────────────────────
 export interface Lesson {
   id: string;
   title: string;
@@ -32,6 +40,7 @@ export interface Lesson {
   sectionId: string;
 }
 
+// ─── Section ──────────────────────────────────────────────────────────────────
 export interface Section {
   id: string;
   title: string;
@@ -40,7 +49,18 @@ export interface Section {
   lessons: Lesson[];
 }
 
-// User types
+// ─── Category ─────────────────────────────────────────────────────────────────
+export interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  icon: string | null;
+  color: string | null;
+  _count?: { courses: number };
+}
+
+// ─── User ─────────────────────────────────────────────────────────────────────
 export interface UserProfile {
   id: string;
   name: string | null;
@@ -49,11 +69,19 @@ export interface UserProfile {
   role: "STUDENT" | "INSTRUCTOR" | "ADMIN";
 }
 
-// Order types
+// ─── Cart ─────────────────────────────────────────────────────────────────────
 export interface CartItem {
   courseId: string;
   title: string;
   thumbnail: string | null;
   price: number;
   salePrice: number | null;
+}
+
+// ─── Stats trang chủ ──────────────────────────────────────────────────────────
+export interface HomeStats {
+  totalCourses: number;
+  totalStudents: number;
+  satisfactionRate: number;
+  totalInstructors?: number;
 }

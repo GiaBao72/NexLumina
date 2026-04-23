@@ -71,6 +71,7 @@ model Category {
   name        String   @unique
   slug        String   @unique
   icon        String?
+  color       String?
   description String?
   createdAt   DateTime @default(now())
   courses     Course[]

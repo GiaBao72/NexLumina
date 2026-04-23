@@ -3,26 +3,11 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Star, Clock, PlayCircle } from "lucide-react";
+import type { Course } from "@/types";
 
 function formatPrice(price: number) {
   return price === 0 ? "Miễn phí" : price.toLocaleString("vi-VN") + "₫";
 }
-
-type Course = {
-  id: string;
-  title: string;
-  slug: string;
-  price: number;
-  salePrice?: number | null;
-  fakeRating?: number | null;
-  fakeReviews?: number | null;
-  totalDuration?: string | null;
-  thumbnail?: string | null;
-  badge?: string | null;
-  category: { name: string; slug: string } | null;
-  instructor: { name: string } | null;
-  _count?: { enrollments: number; reviews: number };
-};
 
 export default function FeaturedCourses() {
   const [courses, setCourses] = useState<Course[]>([]);
