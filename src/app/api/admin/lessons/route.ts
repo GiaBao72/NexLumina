@@ -138,6 +138,20 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ success: true, section });
     }
 
+    if (action === "bulkUpdateLessons") {
+      const { lessonIds, isFree } = body;
+      if (!Array.isArray(lessonIds) || lessonIds.length === 0)
+        return NextResponse.json({ error: "Thiếu lessonIds" }, { status: 400 });
+      if (isFree === undefined)
+        return NextResponse.json({ error: "Thiếu isFree" }, { status: 400 });
+
+      await prisma.lesson.updateMany({
+        where: { id: { in: lessonIds } },
+        data: { isFree: Boolean(isFree) },
+      });
+      return NextResponse.json({ success: true, count: lessonIds.length });
+    }
+
     return NextResponse.json({ error: "action không hợp lệ" }, { status: 400 });
   } catch (err) {
     console.error("[admin/lessons] PATCH", err);
@@ -166,6 +180,14 @@ export async function DELETE(req: NextRequest) {
       // Cascade xóa lessons via onDelete: Cascade trong schema
       await prisma.section.delete({ where: { id: sectionId } });
       return NextResponse.json({ success: true });
+    }
+
+    if (action === "bulkDeleteLessons") {
+      const { lessonIds } = body;
+      if (!Array.isArray(lessonIds) || lessonIds.length === 0)
+        return NextResponse.json({ error: "Thiếu lessonIds" }, { status: 400 });
+      await prisma.lesson.deleteMany({ where: { id: { in: lessonIds } } });
+      return NextResponse.json({ success: true, count: lessonIds.length });
     }
 
     return NextResponse.json({ error: "action không hợp lệ" }, { status: 400 });

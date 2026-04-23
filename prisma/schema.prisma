@@ -125,6 +125,8 @@ model Lesson {
   slug         String
   description  String?
   bunnyVideoId String?
+  thumbnail    String?
+  content      String?
   duration     Int        @default(0)
   order        Int
   isFree       Boolean    @default(false)
@@ -133,8 +135,22 @@ model Lesson {
   updatedAt    DateTime   @updatedAt
   section      Section    @relation(fields: [sectionId], references: [id], onDelete: Cascade)
   progress     Progress[]
+  attachments  LessonAttachment[]
 
   @@map("lessons")
+}
+
+model LessonAttachment {
+  id        String   @id @default(cuid())
+  lessonId  String
+  name      String
+  url       String
+  type      String   @default("file")
+  size      Int?
+  createdAt DateTime @default(now())
+  lesson    Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@map("lesson_attachments")
 }
 
 model Enrollment {
@@ -187,6 +203,8 @@ model Order {
   total           Float
   status          OrderStatus @default(PENDING)
   stripePaymentId String?
+  payosOrderCode  BigInt?     @unique
+  paymentMethod   String?
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
   items           OrderItem[]
@@ -255,4 +273,5 @@ enum OrderStatus {
   PAID
   FAILED
   REFUNDED
+  CANCELLED
 }

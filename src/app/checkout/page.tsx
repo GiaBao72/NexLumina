@@ -43,39 +43,48 @@ function CheckoutInner() {
     }
   }, [session]);
 
+  const [payError, setPayError] = useState("");
+
   const handleOrder = async () => {
     if (!agreed || items.length === 0) return;
+    if (!session?.user) {
+      router.push("/login?redirect=/checkout");
+      return;
+    }
     setLoading(true);
+    setPayError("");
     try {
-      const res = await fetch("/api/orders", {
+      const res = await fetch("/api/payment/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           items: items.map((i) => ({
             id: i.id,
+            title: i.title,
             price: i.salePrice !== undefined && i.salePrice !== null ? i.salePrice : i.price,
           })),
           total,
-          paymentMethod: method,
+          discount: discountAmount,
         }),
       });
 
+      const data = await res.json();
       if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: "Lỗi không xác định" }));
-        alert(err.error ?? "Đặt hàng thất bại. Vui lòng thử lại.");
+        setPayError(data.error ?? "Tạo thanh toán thất bại. Vui lòng thử lại.");
         setLoading(false);
         return;
       }
 
-      const data = await res.json();
+      // Lưu info tạm để dùng ở /payment/return
       sessionStorage.setItem(
-        "nexlumina_last_order",
-        JSON.stringify({ orderId: data.orderId, items, total, email: form.email }),
+        "nexlumina_pending_order",
+        JSON.stringify({ orderId: data.orderId, orderCode: data.orderCode, items, total, email: form.email }),
       );
-      clearCart();
-      router.push("/order-success");
+
+      // Redirect sang trang thanh toán PayOS
+      window.location.href = data.checkoutUrl;
     } catch {
-      alert("Không thể kết nối server. Vui lòng thử lại.");
+      setPayError("Không thể kết nối server. Vui lòng thử lại.");
       setLoading(false);
     }
   };
@@ -189,6 +198,12 @@ function CheckoutInner() {
               </span>
             </label>
 
+            {payError && (
+              <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600">
+                {payError}
+              </div>
+            )}
+
             {/* Submit */}
             <button
               onClick={handleOrder}
@@ -196,9 +211,9 @@ function CheckoutInner() {
               className="w-full rounded-xl bg-teal-600 py-4 text-sm font-bold text-white hover:bg-teal-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
             >
               {loading ? (
-                <><div className="h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin" />Đang xử lý...</>
+                <><div className="h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin" />Đang tạo thanh toán...</>
               ) : (
-                <><Lock className="h-4 w-4" />Đặt hàng an toàn — {formatPrice(total)}</>
+                <><Lock className="h-4 w-4" />Thanh toán qua PayOS — {formatPrice(total)}</>
               )}
             </button>
           </div>
