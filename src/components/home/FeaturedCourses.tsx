@@ -1,11 +1,50 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Star, Clock, PlayCircle } from "lucide-react";
-import { mockCourses, formatPrice } from "@/lib/mock-data";
 
-// Chỉ lấy 4 khóa featured đầu tiên
-const featured = mockCourses.filter((c) => c.featured).slice(0, 4);
+function formatPrice(price: number) {
+  return price === 0 ? "Miễn phí" : price.toLocaleString("vi-VN") + "₫";
+}
+
+type Course = {
+  id: string;
+  title: string;
+  slug: string;
+  price: number;
+  salePrice?: number | null;
+  fakeRating?: number | null;
+  fakeReviews?: number | null;
+  totalDuration?: string | null;
+  thumbnail?: string | null;
+  badge?: string | null;
+  category: { name: string; slug: string } | null;
+  instructor: { name: string } | null;
+  _count?: { enrollments: number; reviews: number };
+};
 
 export default function FeaturedCourses() {
+  const [courses, setCourses] = useState<Course[]>([]);
+
+  useEffect(() => {
+    fetch("/api/courses?featured=true&limit=4")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.courses) setCourses(d.courses.slice(0, 4));
+      })
+      .catch(() => {});
+  }, []);
+
+  const GRADIENTS = [
+    "from-blue-600 to-teal-500",
+    "from-purple-600 to-pink-500",
+    "from-green-600 to-teal-500",
+    "from-violet-600 to-purple-700",
+    "from-orange-500 to-red-500",
+    "from-sky-500 to-blue-600",
+  ];
+
   return (
     <section className="py-20 bg-gray-50">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -16,63 +55,79 @@ export default function FeaturedCourses() {
             </h2>
             <p className="text-gray-500 text-lg">Được lựa chọn bởi hàng nghìn học viên.</p>
           </div>
-          <Link
-            href="/courses"
-            className="hidden md:inline-flex text-sm font-semibold text-teal-600 hover:underline"
-          >
+          <Link href="/courses" className="hidden md:inline-flex text-sm font-semibold text-teal-600 hover:underline">
             Xem tất cả →
           </Link>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {featured.map((c) => (
-            <Link
-              key={c.id}
-              href={`/courses/${c.slug}`}
-              className="group rounded-2xl bg-white border border-gray-100 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-200"
-            >
-              {/* Thumbnail */}
-              <div className={`relative aspect-video bg-gradient-to-br ${c.gradient} flex items-center justify-center`}>
-                <PlayCircle className="h-12 w-12 text-white/70 group-hover:text-white transition-colors" />
-                {c.badge && (
-                  <span className="absolute top-3 left-3 rounded-full bg-orange-500 px-2.5 py-0.5 text-xs font-bold text-white">
-                    {c.badge}
-                  </span>
-                )}
-              </div>
-
-              {/* Content */}
-              <div className="p-4">
-                <span className="text-xs text-teal-600 font-semibold uppercase tracking-wide">{c.category}</span>
-                <h3 className="font-heading font-semibold text-gray-900 text-sm mt-1 mb-2 line-clamp-2 leading-snug">
-                  {c.title}
-                </h3>
-                <p className="text-xs text-gray-500 mb-3">{c.instructor}</p>
-
-                <div className="flex items-center gap-3 text-xs text-gray-500 mb-3">
-                  <span className="flex items-center gap-1">
-                    <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                    <strong className="text-gray-800">{c.rating}</strong>
-                    <span>({c.reviewCount.toLocaleString()})</span>
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Clock className="h-3 w-3" />{c.totalDuration}
-                  </span>
+          {courses.length === 0
+            ? Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="rounded-2xl bg-white border border-gray-100 overflow-hidden animate-pulse">
+                  <div className="aspect-video bg-gray-200" />
+                  <div className="p-4 space-y-2">
+                    <div className="h-3 bg-gray-200 rounded w-1/3" />
+                    <div className="h-4 bg-gray-200 rounded w-full" />
+                    <div className="h-3 bg-gray-200 rounded w-1/2" />
+                  </div>
                 </div>
-
-                <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100">
-                  {c.salePrice ? (
-                    <>
-                      <span className="font-bold text-gray-900 text-base">{formatPrice(c.salePrice)}</span>
-                      <span className="text-xs text-gray-400 line-through">{formatPrice(c.price)}</span>
-                    </>
-                  ) : (
-                    <span className="font-bold text-gray-900 text-base">{formatPrice(c.price)}</span>
-                  )}
-                </div>
-              </div>
-            </Link>
-          ))}
+              ))
+            : courses.map((c, idx) => {
+                const rating = c.fakeRating ?? 4.8;
+                const reviewCount = c.fakeReviews ?? c._count?.reviews ?? 0;
+                const grad = GRADIENTS[idx % GRADIENTS.length];
+                return (
+                  <Link
+                    key={c.id}
+                    href={`/courses/${c.slug}`}
+                    className="group rounded-2xl bg-white border border-gray-100 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-200"
+                  >
+                    <div className={`relative aspect-video bg-gradient-to-br ${grad} flex items-center justify-center`}>
+                      {c.thumbnail ? (
+                        <img src={c.thumbnail} alt={c.title} className="absolute inset-0 w-full h-full object-cover" />
+                      ) : (
+                        <PlayCircle className="h-12 w-12 text-white/70 group-hover:text-white transition-colors" />
+                      )}
+                      {c.badge && (
+                        <span className="absolute top-3 left-3 rounded-full bg-orange-500 px-2.5 py-0.5 text-xs font-bold text-white">
+                          {c.badge}
+                        </span>
+                      )}
+                    </div>
+                    <div className="p-4">
+                      <span className="text-xs text-teal-600 font-semibold uppercase tracking-wide">
+                        {c.category?.name}
+                      </span>
+                      <h3 className="font-heading font-semibold text-gray-900 text-sm mt-1 mb-2 line-clamp-2 leading-snug">
+                        {c.title}
+                      </h3>
+                      <p className="text-xs text-gray-500 mb-3">{c.instructor?.name}</p>
+                      <div className="flex items-center gap-3 text-xs text-gray-500 mb-3">
+                        <span className="flex items-center gap-1">
+                          <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                          <strong className="text-gray-800">{rating}</strong>
+                          {reviewCount > 0 && <span>({reviewCount.toLocaleString()})</span>}
+                        </span>
+                        {c.totalDuration && (
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-3 w-3" />{c.totalDuration}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100">
+                        {c.salePrice != null && c.salePrice > 0 ? (
+                          <>
+                            <span className="font-bold text-gray-900 text-base">{formatPrice(c.salePrice)}</span>
+                            <span className="text-xs text-gray-400 line-through">{formatPrice(c.price)}</span>
+                          </>
+                        ) : (
+                          <span className="font-bold text-gray-900 text-base">{formatPrice(c.price)}</span>
+                        )}
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
         </div>
 
         <div className="text-center mt-10 md:hidden">

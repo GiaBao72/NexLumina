@@ -9,8 +9,10 @@ export async function GET(req: NextRequest) {
     const category = searchParams.get("category")?.trim() ?? "";
     const search   = searchParams.get("search")?.trim() ?? "";
     const sort     = searchParams.get("sort") ?? "popular";
+    const featured = searchParams.get("featured");
 
     const where: any = { status: "PUBLISHED" };
+    if (featured === "true") where.featured = true;
 
     if (category) {
       where.category = { slug: category };

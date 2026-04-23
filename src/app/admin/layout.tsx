@@ -3,12 +3,13 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
-import { BookOpen, BarChart2, Users, ShoppingCart, Settings, LogOut, Menu, Bell, Film, Tag, GraduationCap } from "lucide-react";
+import { BookOpen, BarChart2, Users, ShoppingCart, Settings, LogOut, Menu, Bell, Film, Tag, GraduationCap, Upload } from "lucide-react";
 
 const navItems = [
   { href: "/admin", icon: BarChart2, label: "Dashboard" },
   { href: "/admin/courses", icon: BookOpen, label: "Khóa học" },
   { href: "/admin/lessons", icon: Film, label: "Bài học & Video" },
+  { href: "/admin/bulk-upload", icon: Upload, label: "Bulk Upload" },
   { href: "/admin/categories", icon: Tag, label: "Danh mục" },
   { href: "/admin/instructors", icon: GraduationCap, label: "Giảng viên" },
   { href: "/admin/users", icon: Users, label: "Người dùng" },
