@@ -13,7 +13,6 @@ interface ApiCourse {
   thumbnail: string | null; price: number; salePrice: number | null;
   level: string; status: string; featured: boolean;
   totalLessons: number; totalDuration: number;
-  instructor: { name: string | null; image: string | null };
   category: { name: string; slug: string };
   _count: { enrollments: number; reviews: number };
 }
@@ -298,7 +297,6 @@ function CoursesPageInner() {
                         <h3 className="font-heading font-semibold text-gray-900 text-sm mt-1 mb-1.5 line-clamp-2 leading-snug group-hover:text-teal-600 transition-colors">
                           {course.title}
                         </h3>
-                        <p className="text-xs text-gray-500 mb-3">{course.instructor.name ?? "NexLumina"}</p>
 
                         <div className="flex items-center gap-3 text-xs text-gray-500 mb-3">
                           <span className="flex items-center gap-1">

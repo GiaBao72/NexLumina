@@ -31,7 +31,6 @@ interface ApiCourse {
   level: string; language: string; status: string;
   fakeRating: number | null; fakeReviews: number | null; fakeStudents: number | null;
   whatYouLearn: string[];
-  instructor: { id: string; name: string | null; image: string | null } | null;
   category: { id: string; name: string; slug: string } | null;
   sections: ApiSection[];
   enrollments: { userId: string }[];
@@ -284,7 +283,6 @@ export default function CourseDetailPage({ params: paramsPromise }: { params: Pr
   const handleAddToCart = () => {
     addItem({
       id: course.id, title: course.title, slug: course.slug,
-      instructor: course.instructor?.name ?? "NexLumina",
       category: course.category?.name ?? "",
       price: course.price, salePrice: course.salePrice ?? undefined,
       gradient: "from-teal-500 to-teal-700",
@@ -331,14 +329,7 @@ export default function CourseDetailPage({ params: paramsPromise }: { params: Pr
                   <div className="flex items-center gap-1 text-gray-400"><BarChart2 className="h-4 w-4" /><span>{levelLabel[course.level] ?? course.level}</span></div>
                   <div className="flex items-center gap-1 text-gray-400"><Globe className="h-4 w-4" /><span>{course.language === "vi" ? "Tiếng Việt" : course.language}</span></div>
                 </div>
-                {course.instructor && (
-                  <div className="flex items-center gap-2 mt-4">
-                    <div className="h-8 w-8 rounded-full bg-teal-600 flex items-center justify-center text-white text-xs font-bold overflow-hidden">
-                      {course.instructor.image ? <img src={course.instructor.image} alt={course.instructor.name ?? ""} className="w-full h-full object-cover" /> : (course.instructor.name?.slice(0, 2).toUpperCase() ?? "GV")}
-                    </div>
-                    <span className="text-sm text-gray-300">Giảng viên: <span className="text-teal-400 font-semibold">{course.instructor.name}</span></span>
-                  </div>
-                )}
+
               </div>
               <div className="hidden lg:block lg:col-span-1">
                 <div className="sticky top-20">
@@ -428,26 +419,7 @@ export default function CourseDetailPage({ params: paramsPromise }: { params: Pr
                       <p>Với <strong>{studentCount.toLocaleString()} học viên</strong> đã đăng ký, đây là một trong những khóa học được đánh giá cao nhất trên NexLumina.</p>
                     </div>
                   </section>
-                  {course.instructor && (
-                    <section className="rounded-2xl border border-gray-200 bg-white p-6">
-                      <h2 className="font-heading text-xl font-bold text-gray-900 mb-4">Giảng viên</h2>
-                      <div className="flex items-start gap-4">
-                        <div className="h-16 w-16 rounded-full bg-gradient-to-br from-teal-500 to-teal-700 flex items-center justify-center text-white font-bold text-lg flex-shrink-0 overflow-hidden">
-                          {course.instructor.image ? <img src={course.instructor.image} alt="" className="w-full h-full object-cover" /> : (course.instructor.name?.slice(0, 2).toUpperCase() ?? "GV")}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-gray-900 text-base">{course.instructor.name}</p>
-                          <p className="text-sm text-teal-600 mb-2">Chuyên gia {course.category?.name ?? "NexLumina"}</p>
-                          <div className="flex flex-wrap gap-3 text-xs text-gray-500 mb-3">
-                            <span className="flex items-center gap-1"><Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" /> {rating} đánh giá</span>
-                            <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" /> {studentCount.toLocaleString()} học viên</span>
-                            <span className="flex items-center gap-1"><BookOpen className="h-3.5 w-3.5" /> {course.sections.length} chương</span>
-                          </div>
-                          <p className="text-sm text-gray-600">Chuyên gia với nhiều năm kinh nghiệm thực chiến. Đam mê chia sẻ kiến thức và giúp học viên đạt được mục tiêu.</p>
-                        </div>
-                      </div>
-                    </section>
-                  )}
+
                 </>
               )}
 

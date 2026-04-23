@@ -19,7 +19,6 @@ model User {
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
   accounts      Account[]
-  courses       Course[]     @relation("InstructorCourses")
   enrollments   Enrollment[]
   orders        Order[]
   reviews       Review[]
@@ -101,11 +100,9 @@ model Course {
   whatYouLearn  String[]
   requirements  String[]
   categoryId    String
-  instructorId  String
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
   category      Category     @relation(fields: [categoryId], references: [id])
-  instructor    User         @relation("InstructorCourses", fields: [instructorId], references: [id])
   enrollments   Enrollment[]
   orders        OrderItem[]
   reviews       Review[]
@@ -253,7 +250,6 @@ model SiteSettings {
 
 enum Role {
   STUDENT
-  INSTRUCTOR
   ADMIN
 }
 

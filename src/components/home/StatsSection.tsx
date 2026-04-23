@@ -7,7 +7,7 @@ const FALLBACK: HomeStats = {
   totalCourses: 500,
   totalStudents: 12000,
   satisfactionRate: 98,
-  totalInstructors: 50,
+  totalCategories: 20,
 };
 
 export default function StatsSection() {
@@ -33,8 +33,8 @@ export default function StatsSection() {
     },
     { value: `${stats.satisfactionRate}%`, label: "Hài lòng", emoji: "⭐" },
     {
-      value: `${stats.totalInstructors ?? 50}+`,
-      label: "Giảng viên",
+      value: `${stats.totalCategories ?? 20}+`,
+      label: "Danh mục",
       emoji: "👨‍🏫",
     },
   ];

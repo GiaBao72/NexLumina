@@ -105,19 +105,16 @@ export async function GET() {
     const topCourseDetails = await prisma.course.findMany({
       where: { id: { in: topCourseIds } },
       include: {
-        instructor: { select: { name: true } },
-        _count:     { select: { enrollments: true } },
+        _count: { select: { enrollments: true } },
       },
     });
 
-    // Merge revenue vào details, giữ thứ tự sort
     const topCourses = topCourseIds.map((id) => {
       const detail  = topCourseDetails.find((c) => c.id === id);
       const revenue = topCoursesRaw.find((r) => r.courseId === id)?._sum.price ?? 0;
       return detail ? {
         id:          detail.id,
         title:       detail.title,
-        instructor:  detail.instructor.name,
         enrollments: detail._count.enrollments,
         revenue,
         status:      detail.status,

@@ -19,9 +19,7 @@ export interface Course {
   fakeReviews: number | null;
   fakeStudents: number | null;
   categoryId: string;
-  instructorId: string;
   category: { id: string; name: string; slug: string } | null;
-  instructor: { id: string; name: string } | null;
   _count?: { enrollments: number; reviews: number };
   createdAt: Date | string;
   updatedAt: Date | string;
@@ -66,7 +64,7 @@ export interface UserProfile {
   name: string | null;
   email: string;
   image: string | null;
-  role: "STUDENT" | "INSTRUCTOR" | "ADMIN";
+  role: "STUDENT" | "ADMIN";
 }
 
 // ─── Cart ─────────────────────────────────────────────────────────────────────
@@ -83,5 +81,5 @@ export interface HomeStats {
   totalCourses: number;
   totalStudents: number;
   satisfactionRate: number;
-  totalInstructors?: number;
+  totalCategories?: number;
 }

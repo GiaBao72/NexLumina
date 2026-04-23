@@ -10,7 +10,7 @@ type Stats = {
 };
 type ChartPoint = { label: string; value: number };
 type Order = { id: string; userName: string | null; userEmail: string; courseTitle: string; total: number; status: string; createdAt: string };
-type Course = { id: string; title: string; instructor: string | null; enrollments: number; status: string };
+type Course = { id: string; title: string; enrollments: number; status: string };
 
 function formatVND(n: number) { return n.toLocaleString("vi-VN") + "₫"; }
 function fmt(d: string) { return new Date(d).toLocaleDateString("vi-VN"); }
@@ -167,7 +167,6 @@ export default function AdminDashboard() {
                   <span className="text-sm font-bold text-gray-300 w-5 text-center">{i + 1}</span>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-gray-900 truncate">{c.title}</p>
-                    <p className="text-xs text-gray-400">{c.instructor}</p>
                   </div>
                   <div className="text-right flex-shrink-0">
                     <p className="text-sm font-semibold text-gray-700">{c.enrollments.toLocaleString()} HV</p>

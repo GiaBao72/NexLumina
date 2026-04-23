@@ -4,7 +4,7 @@ import { Search, Eye, Ban, CheckCircle2, ChevronLeft, ChevronRight, X } from "lu
 
 type User = {
   id: string; name: string | null; email: string;
-  role: "STUDENT" | "INSTRUCTOR" | "ADMIN";
+  role: "STUDENT" | "ADMIN";
   banned: boolean; createdAt: string;
   _count: { enrollments: number };
 };
@@ -18,17 +18,16 @@ function fmtDate(d: string) { return new Date(d).toLocaleDateString("vi-VN"); }
 
 const roleColors: Record<string, string> = {
   ADMIN: "bg-purple-100 text-purple-700",
-  INSTRUCTOR: "bg-blue-100 text-blue-700",
   STUDENT: "bg-gray-100 text-gray-600",
 };
 const roleLabels: Record<string, string> = {
-  ADMIN: "Quản trị", INSTRUCTOR: "Giảng viên", STUDENT: "Học viên",
+  ADMIN: "Quản trị", STUDENT: "Học viên",
 };
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [meta, setMeta] = useState<Meta>({ total: 0, page: 1, totalPages: 1 });
-  const [roleCounts, setRoleCounts] = useState({ STUDENT: 0, INSTRUCTOR: 0, ADMIN: 0 });
+  const [roleCounts, setRoleCounts] = useState({ STUDENT: 0, ADMIN: 0 });
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [role, setRole] = useState("");
@@ -47,7 +46,7 @@ export default function AdminUsersPage() {
       const data = await res.json();
       setUsers(data.users ?? []);
       setMeta({ total: data.total ?? 0, page: data.page ?? 1, totalPages: data.totalPages ?? 1 });
-      setRoleCounts({ STUDENT: data.roleCounts?.STUDENT ?? 0, INSTRUCTOR: data.roleCounts?.INSTRUCTOR ?? 0, ADMIN: data.roleCounts?.ADMIN ?? 0 });
+      setRoleCounts({ STUDENT: data.roleCounts?.STUDENT ?? 0, ADMIN: data.roleCounts?.ADMIN ?? 0 });
     } catch {
       setFetchError("Không thể tải danh sách người dùng. Vui lòng thử lại.");
     } finally {
@@ -83,7 +82,6 @@ export default function AdminUsersPage() {
   const stats = [
     { label: "Tổng người dùng", value: meta.total },
     { label: "Học viên", value: roleCounts.STUDENT },
-    { label: "Giảng viên", value: roleCounts.INSTRUCTOR },
     { label: "Quản trị", value: roleCounts.ADMIN },
   ];
 
@@ -122,7 +120,6 @@ export default function AdminUsersPage() {
           className="sm:w-48 px-3 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white">
           <option value="">Tất cả vai trò</option>
           <option value="STUDENT">Học viên</option>
-          <option value="INSTRUCTOR">Giảng viên</option>
           <option value="ADMIN">Quản trị</option>
         </select>
       </div>

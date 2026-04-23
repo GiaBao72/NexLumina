@@ -39,7 +39,6 @@ export async function GET(req: NextRequest) {
         skip: (page - 1) * limit,
         take: limit,
         include: {
-          instructor: { select: { id: true, name: true } },
           category:   { select: { id: true, name: true, slug: true } },
           _count:     { select: { enrollments: true } },
         },
@@ -68,10 +67,10 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { title, description, price, salePrice, level, status, categoryId, instructorId, featured, thumbnail } = body;
+    const { title, description, price, salePrice, level, status, categoryId, featured, thumbnail } = body;
 
-    if (!title?.trim() || !description || !categoryId || !instructorId) {
-      return NextResponse.json({ error: "Thiếu thông tin bắt buộc (title, categoryId, instructorId)" }, { status: 400 });
+    if (!title?.trim() || !description || !categoryId) {
+      return NextResponse.json({ error: "Thiếu thông tin bắt buộc (title, categoryId)" }, { status: 400 });
     }
 
     // Validate price
@@ -112,11 +111,11 @@ export async function POST(req: NextRequest) {
         salePrice: salePriceNum,
         level:  level  || "BEGINNER",
         status: status || "DRAFT",
-        categoryId, instructorId,
+        categoryId,
         featured:  Boolean(featured),
         thumbnail: thumbnail || null,
       },
-      include: { instructor: { select: { id: true, name: true } }, category: { select: { id: true, name: true, slug: true } } },
+      include: { category: { select: { id: true, name: true, slug: true } } },
     });
 
     return NextResponse.json({ success: true, course }, { status: 201 });
@@ -157,7 +156,7 @@ export async function PATCH(req: NextRequest) {
     else if (action === "draft") updateData.status = "DRAFT";
     else {
       // Edit fields
-      const allowed = ["title", "description", "price", "salePrice", "level", "status", "featured", "thumbnail", "categoryId", "instructorId"];
+      const allowed = ["title", "description", "price", "salePrice", "level", "status", "featured", "thumbnail", "categoryId"];
       allowed.forEach((k) => { if (fields[k] !== undefined) updateData[k] = fields[k]; });
       if (updateData.price     !== undefined) updateData.price     = Number(updateData.price);
       if (updateData.salePrice !== undefined) updateData.salePrice = updateData.salePrice ? Number(updateData.salePrice) : null;

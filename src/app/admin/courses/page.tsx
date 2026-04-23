@@ -5,13 +5,11 @@ import { Search, Plus, Pencil, Archive, ChevronLeft, ChevronRight, X, Trash2, Bo
 type Course = {
   id: string; title: string; slug: string; price: number; salePrice: number | null;
   status: "PUBLISHED" | "DRAFT" | "ARCHIVED"; level: string; featured: boolean;
-  instructor: { id: string; name: string | null };
   category: { id: string; name: string; slug: string };
   _count: { enrollments: number };
 };
 type Meta = { total: number; page: number; totalPages: number };
 type Category = { id: string; name: string; slug: string };
-type Instructor = { id: string; name: string | null; email: string };
 type CourseStats = { total: number; published: number; draft: number; archived: number };
 
 const statusColors: Record<string, string> = {
@@ -26,7 +24,7 @@ function fmtVND(n: number) { return n.toLocaleString("vi-VN") + "₫"; }
 const emptyForm = {
   title: "", description: "", price: "", salePrice: "",
   level: "BEGINNER", status: "DRAFT",
-  categoryId: "", instructorId: "",
+  categoryId: "",
   featured: false, thumbnail: "",
 };
 
@@ -48,17 +46,14 @@ export default function AdminCoursesPage() {
   const [deleteLoading, setDeleteLoading] = useState(false);
   // Dropdowns
   const [categories, setCategories] = useState<Category[]>([]);
-  const [instructors, setInstructors] = useState<Instructor[]>([]);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  // Fetch categories + instructors song song khi mount
+  // Fetch categories khi mount
   useEffect(() => {
     Promise.all([
       fetch("/api/admin/categories").then(r => r.json()).catch(() => ({ categories: [] })),
-      fetch("/api/admin/instructors").then(r => r.json()).catch(() => ({ instructors: [] })),
-    ]).then(([catData, instData]) => {
+    ]).then(([catData]) => {
       setCategories(catData.categories ?? []);
-      setInstructors(instData.instructors ?? []);
     });
   }, []);
 
@@ -103,7 +98,6 @@ export default function AdminCoursesPage() {
       level: c.level,
       status: c.status,
       categoryId: c.category.id,   // dùng ID, không phải slug
-      instructorId: c.instructor.id, // giữ instructorId thực
       featured: c.featured,
       thumbnail: "",
     });
@@ -114,7 +108,6 @@ export default function AdminCoursesPage() {
     e.preventDefault();
     if (!form.title.trim()) { setFormError("Tên khóa học không được để trống"); return; }
     if (!form.categoryId) { setFormError("Vui lòng chọn danh mục"); return; }
-    if (!form.instructorId) { setFormError("Vui lòng chọn giảng viên"); return; }
     setFormLoading(true); setFormError("");
     try {
       const body = {
@@ -275,7 +268,6 @@ export default function AdminCoursesPage() {
                   </th>
                   <th className="text-left px-2 py-3 text-xs font-semibold text-gray-500 uppercase">Khóa học</th>
                   <th className="text-left px-3 py-3 text-xs font-semibold text-gray-500 uppercase hidden md:table-cell">Danh mục</th>
-                  <th className="text-left px-3 py-3 text-xs font-semibold text-gray-500 uppercase hidden lg:table-cell">Giảng viên</th>
                   <th className="text-center px-3 py-3 text-xs font-semibold text-gray-500 uppercase hidden md:table-cell">Học viên</th>
                   <th className="text-right px-3 py-3 text-xs font-semibold text-gray-500 uppercase">Giá</th>
                   <th className="text-left px-3 py-3 text-xs font-semibold text-gray-500 uppercase">Trạng thái</th>
@@ -294,7 +286,6 @@ export default function AdminCoursesPage() {
                       <p className="text-xs text-gray-400">{levelLabels[c.level] ?? c.level}</p>
                     </td>
                     <td className="px-3 py-3 text-gray-500 hidden md:table-cell">{c.category.name}</td>
-                    <td className="px-3 py-3 text-gray-500 hidden lg:table-cell">{c.instructor.name ?? "—"}</td>
                     <td className="px-3 py-3 text-center text-gray-700 font-medium hidden md:table-cell">{c._count.enrollments}</td>
                     <td className="px-3 py-3 text-right">
                       <p className="font-semibold text-gray-900">{c.salePrice ? fmtVND(c.salePrice) : fmtVND(c.price)}</p>
@@ -359,34 +350,19 @@ export default function AdminCoursesPage() {
                 <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3}
                   className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none" />
               </div>
-              {/* Category + Instructor dropdowns */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1">Danh mục *</label>
-                  <select value={form.categoryId} onChange={(e) => setForm({ ...form, categoryId: e.target.value })} required
-                    className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white">
-                    <option value="">-- Chọn danh mục --</option>
-                    {categories.map((cat) => (
-                      <option key={cat.id} value={cat.id}>{cat.name}</option>
-                    ))}
-                  </select>
-                  {categories.length === 0 && (
-                    <p className="text-xs text-amber-500 mt-1">Chưa có danh mục. <a href="/admin/categories" className="underline">Tạo ngay</a></p>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1">Giảng viên *</label>
-                  <select value={form.instructorId} onChange={(e) => setForm({ ...form, instructorId: e.target.value })} required
-                    className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white">
-                    <option value="">-- Chọn giảng viên --</option>
-                    {instructors.map((inst) => (
-                      <option key={inst.id} value={inst.id}>{inst.name ?? inst.email}</option>
-                    ))}
-                  </select>
-                  {instructors.length === 0 && (
-                    <p className="text-xs text-amber-500 mt-1">Chưa có giảng viên. <a href="/admin/instructors" className="underline">Tạo ngay</a></p>
-                  )}
-                </div>
+              {/* Category dropdown */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Danh mục *</label>
+                <select value={form.categoryId} onChange={(e) => setForm({ ...form, categoryId: e.target.value })} required
+                  className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white">
+                  <option value="">-- Chọn danh mục --</option>
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  ))}
+                </select>
+                {categories.length === 0 && (
+                  <p className="text-xs text-amber-500 mt-1">Chưa có danh mục. <a href="/admin/categories" className="underline">Tạo ngay</a></p>
+                )}
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>

@@ -44,8 +44,8 @@ export async function GET(
     const videoId  = lesson.bunnyVideoId;
     const courseId = lesson.section.courseId;
 
-    // Admin & Instructor luôn pass
-    const isPrivileged = userRole === "ADMIN" || userRole === "INSTRUCTOR";
+    // Admin luôn pass
+    const isPrivileged = userRole === "ADMIN";
 
     if (!isPrivileged && !lesson.isFree) {
       // Kiểm tra enrollment

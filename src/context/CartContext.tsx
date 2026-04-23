@@ -6,7 +6,7 @@ import type { MockCourse } from '@/lib/mock-data';
 // ── Types ─────────────────────────────────────────────────────────────────────
 export type CartItem = Pick<
   MockCourse,
-  'id' | 'title' | 'slug' | 'instructor' | 'category' | 'price' | 'salePrice' | 'gradient' | 'badge' | 'rating' | 'totalLessons' | 'totalDuration'
+  'id' | 'title' | 'slug' | 'category' | 'price' | 'salePrice' | 'gradient' | 'badge' | 'rating' | 'totalLessons' | 'totalDuration'
 >;
 
 interface CartContextValue {

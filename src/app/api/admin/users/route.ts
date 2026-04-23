@@ -10,7 +10,7 @@ async function requireAdmin() {
   return session;
 }
 
-const VALID_ROLES = ["STUDENT", "INSTRUCTOR", "ADMIN"];
+const VALID_ROLES = ["STUDENT", "ADMIN"];
 
 // GET /api/admin/users?page=1&limit=10&search=&role=
 export async function GET(req: NextRequest) {
@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
       where.role = role;
     }
 
-    const [users, total, studentCount, instructorCount, adminCount] = await Promise.all([
+    const [users, total, studentCount, adminCount] = await Promise.all([
       prisma.user.findMany({
         where,
         orderBy: { createdAt: "desc" },
@@ -52,14 +52,13 @@ export async function GET(req: NextRequest) {
       }),
       prisma.user.count({ where }),
       prisma.user.count({ where: { role: "STUDENT" } }),
-      prisma.user.count({ where: { role: "INSTRUCTOR" } }),
       prisma.user.count({ where: { role: "ADMIN" } }),
     ]);
 
     return NextResponse.json({
       users, total, page, limit,
       totalPages: Math.ceil(total / limit),
-      roleCounts: { STUDENT: studentCount, INSTRUCTOR: instructorCount, ADMIN: adminCount },
+      roleCounts: { STUDENT: studentCount, ADMIN: adminCount },
     });
   } catch (err) {
     console.error("[admin/users] GET", err);

@@ -19,7 +19,6 @@ interface EnrolledCourse {
   title: string;
   slug: string;
   thumbnail: string | null;
-  instructorName: string | null;
   totalLessons: number;
   totalDuration: number;
   level: string;
@@ -264,7 +263,6 @@ export default function DashboardPage() {
                           {course.title}
                         </h3>
                         <p className="text-xs text-gray-500 mb-3">
-                          {course.instructorName ?? "NexLumina"}
                         </p>
                         <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
                           <span>{course.progressPct}% hoàn thành</span>

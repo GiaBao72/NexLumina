@@ -22,7 +22,6 @@ export async function GET(req: NextRequest) {
       where.OR = [
         { title:       { contains: search, mode: "insensitive" } },
         { description: { contains: search, mode: "insensitive" } },
-        { instructor:  { name: { contains: search, mode: "insensitive" } } },
       ];
     }
 
@@ -36,7 +35,6 @@ export async function GET(req: NextRequest) {
       where,
       orderBy,
       include: {
-        instructor: { select: { name: true, image: true } },
         category:   { select: { name: true, slug: true } },
         _count:     { select: { enrollments: true, reviews: true } },
       },

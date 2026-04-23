@@ -130,7 +130,6 @@ export default function CartPage() {
                         <h3 className="font-heading font-semibold text-gray-900 text-sm sm:text-base mt-0.5 line-clamp-2 leading-snug">
                           {item.title}
                         </h3>
-                        <p className="text-xs text-gray-500 mt-1">{item.instructor}</p>
                         <div className="flex items-center gap-3 text-xs text-gray-400 mt-1.5">
                           <span className="flex items-center gap-1">
                             <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />

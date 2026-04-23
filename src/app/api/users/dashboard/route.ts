@@ -19,7 +19,6 @@ export async function GET() {
       include: {
         course: {
           include: {
-            instructor: { select: { name: true } },
             _count: { select: { enrollments: true, reviews: true } },
           },
         },
@@ -42,7 +41,6 @@ export async function GET() {
         title: enroll.course.title,
         slug: enroll.course.slug,
         thumbnail: enroll.course.thumbnail,
-        instructorName: enroll.course.instructor.name,
         totalLessons: enroll.course.totalLessons,
         totalDuration: enroll.course.totalDuration,
         level: enroll.course.level,

@@ -88,7 +88,6 @@ export default function OrderSuccessPage() {
                   />
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-medium text-gray-900 line-clamp-1">{c.title}</p>
-                    <p className="text-xs text-gray-500">{c.instructor}</p>
                   </div>
                   <span className="text-sm font-semibold text-gray-700 flex-shrink-0">
                     {formatPrice(price)}

@@ -230,7 +230,6 @@ function CheckoutInner() {
                       <div className={`h-12 w-12 rounded-lg bg-gradient-to-br ${c.gradient} flex-shrink-0`} />
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-medium text-gray-900 line-clamp-2 leading-snug">{c.title}</p>
-                        <p className="text-xs text-gray-500 mt-0.5">{c.instructor}</p>
                       </div>
                       <span className="text-sm font-semibold text-gray-900 flex-shrink-0">{formatPrice(price)}</span>
                     </div>

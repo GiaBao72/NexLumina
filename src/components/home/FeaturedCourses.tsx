@@ -86,7 +86,6 @@ export default function FeaturedCourses() {
                       <h3 className="font-heading font-semibold text-gray-900 text-sm mt-1 mb-2 line-clamp-2 leading-snug">
                         {c.title}
                       </h3>
-                      <p className="text-xs text-gray-500 mb-3">{c.instructor?.name}</p>
                       <div className="flex items-center gap-3 text-xs text-gray-500 mb-3">
                         <span className="flex items-center gap-1">
                           <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
