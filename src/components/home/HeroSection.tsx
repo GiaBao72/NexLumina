@@ -47,7 +47,9 @@ export default function HeroSection() {
                 Khám phá khóa học
                 <ArrowRight className="h-4 w-4" />
               </Link>
-              <button className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-700 px-6 py-3.5 text-base font-semibold text-gray-300 hover:bg-gray-800 transition-colors">
+              <button
+                onClick={() => document.getElementById("featured-courses")?.scrollIntoView({ behavior: "smooth" })}
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-700 px-6 py-3.5 text-base font-semibold text-gray-300 hover:bg-gray-800 transition-colors">
                 <PlayCircle className="h-5 w-5 text-teal-400" />
                 Xem demo miễn phí
               </button>
@@ -94,7 +96,8 @@ export default function HeroSection() {
                 </div>
                 <span className="rounded-full bg-orange-500 px-3 py-1 text-xs font-bold text-white">-50%</span>
               </div>
-              <button className="mt-4 w-full rounded-xl bg-teal-600 py-3 text-sm font-semibold text-white hover:bg-teal-500 transition-colors">
+              <button className="mt-4 w-full rounded-xl bg-teal-600 py-3 text-sm font-semibold text-white hover:bg-teal-500 transition-colors"
+                onClick={() => window.location.href = "/courses"}>
                 Đăng ký ngay
               </button>
             </div>

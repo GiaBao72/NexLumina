@@ -528,7 +528,16 @@ export default function CourseDetailPage({ params: paramsPromise }: { params: Pr
                     className={`flex-1 flex items-center justify-center gap-2 rounded-xl border py-2.5 text-sm font-medium transition-colors ${wishlisted ? "border-red-300 bg-red-50 text-red-500" : "border-gray-200 text-gray-600 hover:border-red-300 hover:text-red-500"}`}>
                     <Heart className={`h-4 w-4 ${wishlisted ? "fill-red-500" : ""}`} /> {wishlisted ? "Đã lưu" : "Yêu thích"}
                   </button>
-                  <button className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-gray-200 py-2.5 text-sm font-medium text-gray-600 hover:border-gray-300 transition-colors">
+                  <button
+                    onClick={() => {
+                      const url = window.location.href;
+                      if (navigator.share) {
+                        navigator.share({ title: course.title, url });
+                      } else {
+                        navigator.clipboard.writeText(url).then(() => alert("Đã copy link!"));
+                      }
+                    }}
+                    className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-gray-200 py-2.5 text-sm font-medium text-gray-600 hover:border-gray-300 transition-colors">
                     <Share2 className="h-4 w-4" /> Chia sẻ
                   </button>
                 </div>

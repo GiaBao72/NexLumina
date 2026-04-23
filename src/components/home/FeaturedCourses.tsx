@@ -31,7 +31,7 @@ export default function FeaturedCourses() {
   ];
 
   return (
-    <section className="py-20 bg-gray-50">
+    <section id="featured-courses" className="py-20 bg-gray-50">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex items-end justify-between mb-12">
           <div>

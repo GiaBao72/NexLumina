@@ -1,11 +1,8 @@
-import type { Metadata } from "next";
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import { BookOpen, Clock, Tag, ArrowRight } from "lucide-react";
-
-export const metadata: Metadata = {
-  title: "Blog | NexLumina",
-  description: "Bài viết, hướng dẫn và kinh nghiệm học tập từ đội ngũ NexLumina.",
-};
 
 const POSTS = [
   {
@@ -85,6 +82,17 @@ const POSTS = [
 const CATEGORIES = ["Tất cả", "Lập trình", "Thiết kế", "Dữ liệu", "AI & ML", "Ngoại ngữ", "Kỹ năng mềm"];
 
 export default function BlogPage() {
+  const [activeCategory, setActiveCategory] = useState("Tất cả");
+
+  const filtered =
+    activeCategory === "Tất cả"
+      ? POSTS
+      : POSTS.filter((p) => p.category === activeCategory);
+
+  const featured = filtered[0];
+  const sideCards = filtered.slice(1, 3);
+  const restCards = filtered.slice(3);
+
   return (
     <main className="min-h-screen bg-[#F0FDFA]">
       {/* Hero */}
@@ -110,8 +118,9 @@ export default function BlogPage() {
             {CATEGORIES.map((cat) => (
               <button
                 key={cat}
+                onClick={() => setActiveCategory(cat)}
                 className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
-                  cat === "Tất cả"
+                  cat === activeCategory
                     ? "bg-teal-600 text-white"
                     : "bg-gray-100 text-gray-600 hover:bg-teal-50 hover:text-teal-700"
                 }`}
@@ -125,107 +134,132 @@ export default function BlogPage() {
 
       {/* Posts Grid */}
       <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-14">
-        {/* Featured */}
-        <div className="mb-10">
-          <h2 className="text-sm font-semibold uppercase tracking-widest text-teal-600 mb-6">
-            Bài nổi bật
-          </h2>
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-            {/* Big card */}
-            <Link
-              href={`/blog/${POSTS[0].slug}`}
-              className="lg:col-span-3 group rounded-2xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow border border-gray-100"
+        {filtered.length === 0 ? (
+          <div className="text-center py-20 text-gray-400">
+            <BookOpen className="h-12 w-12 mx-auto mb-3 opacity-30" />
+            <p className="text-base font-medium">Chưa có bài viết trong lĩnh vực này.</p>
+            <button
+              onClick={() => setActiveCategory("Tất cả")}
+              className="mt-4 text-sm text-teal-600 hover:underline"
             >
-              <div className={`h-52 w-full ${POSTS[0].cover} flex items-center justify-center`}>
-                <BookOpen className="h-14 w-14 text-white/60" />
-              </div>
-              <div className="p-6">
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="rounded-full bg-teal-50 text-teal-700 text-xs font-semibold px-3 py-1">
-                    {POSTS[0].category}
-                  </span>
-                  <span className="text-xs text-gray-400 flex items-center gap-1">
-                    <Clock className="h-3 w-3" /> {POSTS[0].readTime}
-                  </span>
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-teal-700 transition-colors">
-                  {POSTS[0].title}
-                </h3>
-                <p className="text-gray-500 text-sm line-clamp-2">{POSTS[0].excerpt}</p>
-                <div className="mt-4 flex items-center justify-between text-xs text-gray-400">
-                  <span>{POSTS[0].author} · {POSTS[0].date}</span>
-                  <span className="flex items-center gap-1 text-teal-600 font-medium group-hover:gap-2 transition-all">
-                    Đọc tiếp <ArrowRight className="h-3 w-3" />
-                  </span>
-                </div>
-              </div>
-            </Link>
-
-            {/* Side cards */}
-            <div className="lg:col-span-2 flex flex-col gap-4">
-              {POSTS.slice(1, 3).map((post) => (
-                <Link
-                  key={post.slug}
-                  href={`/blog/${post.slug}`}
-                  className="group flex gap-4 rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-4"
-                >
-                  <div className={`shrink-0 h-20 w-20 rounded-xl ${post.cover} flex items-center justify-center`}>
-                    <BookOpen className="h-8 w-8 text-white/60" />
-                  </div>
-                  <div className="min-w-0">
-                    <span className="text-xs font-semibold text-teal-700">{post.category}</span>
-                    <h3 className="text-sm font-bold text-gray-900 mt-0.5 line-clamp-2 group-hover:text-teal-700 transition-colors">
-                      {post.title}
-                    </h3>
-                    <p className="mt-1 text-xs text-gray-400 flex items-center gap-1">
-                      <Clock className="h-3 w-3" /> {post.readTime} · {post.date}
-                    </p>
-                  </div>
-                </Link>
-              ))}
-            </div>
+              Xem tất cả bài viết
+            </button>
           </div>
-        </div>
+        ) : (
+          <>
+            {/* Featured */}
+            <div className="mb-10">
+              <h2 className="text-sm font-semibold uppercase tracking-widest text-teal-600 mb-6">
+                Bài nổi bật
+              </h2>
+              <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+                {/* Big card */}
+                {featured && (
+                  <Link
+                    href={`/blog/${featured.slug}`}
+                    className="lg:col-span-3 group rounded-2xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow border border-gray-100"
+                  >
+                    <div className={`h-52 w-full ${featured.cover} flex items-center justify-center`}>
+                      <BookOpen className="h-14 w-14 text-white/60" />
+                    </div>
+                    <div className="p-6">
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="rounded-full bg-teal-50 text-teal-700 text-xs font-semibold px-3 py-1">
+                          {featured.category}
+                        </span>
+                        <span className="text-xs text-gray-400 flex items-center gap-1">
+                          <Clock className="h-3 w-3" /> {featured.readTime}
+                        </span>
+                      </div>
+                      <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-teal-700 transition-colors">
+                        {featured.title}
+                      </h3>
+                      <p className="text-gray-500 text-sm line-clamp-2">{featured.excerpt}</p>
+                      <div className="mt-4 flex items-center justify-between text-xs text-gray-400">
+                        <span>{featured.author} · {featured.date}</span>
+                        <span className="flex items-center gap-1 text-teal-600 font-medium group-hover:gap-2 transition-all">
+                          Đọc tiếp <ArrowRight className="h-3 w-3" />
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+                )}
 
-        {/* All Posts */}
-        <h2 className="text-sm font-semibold uppercase tracking-widest text-teal-600 mb-6">
-          Tất cả bài viết
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {POSTS.slice(3).map((post) => (
-            <Link
-              key={post.slug}
-              href={`/blog/${post.slug}`}
-              className="group rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-md transition-shadow overflow-hidden"
-            >
-              <div className={`h-40 w-full ${post.cover} flex items-center justify-center`}>
-                <BookOpen className="h-10 w-10 text-white/60" />
+                {/* Side cards */}
+                {sideCards.length > 0 && (
+                  <div className="lg:col-span-2 flex flex-col gap-4">
+                    {sideCards.map((post) => (
+                      <Link
+                        key={post.slug}
+                        href={`/blog/${post.slug}`}
+                        className="group flex gap-4 rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-4"
+                      >
+                        <div className={`shrink-0 h-20 w-20 rounded-xl ${post.cover} flex items-center justify-center`}>
+                          <BookOpen className="h-8 w-8 text-white/60" />
+                        </div>
+                        <div className="min-w-0">
+                          <span className="text-xs font-semibold text-teal-700">{post.category}</span>
+                          <h3 className="text-sm font-bold text-gray-900 mt-0.5 line-clamp-2 group-hover:text-teal-700 transition-colors">
+                            {post.title}
+                          </h3>
+                          <p className="mt-1 text-xs text-gray-400 flex items-center gap-1">
+                            <Clock className="h-3 w-3" /> {post.readTime} · {post.date}
+                          </p>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                )}
               </div>
-              <div className="p-5">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="rounded-full bg-teal-50 text-teal-700 text-xs font-semibold px-3 py-1 flex items-center gap-1">
-                    <Tag className="h-3 w-3" /> {post.tag}
-                  </span>
+            </div>
+
+            {/* Rest */}
+            {restCards.length > 0 && (
+              <>
+                <h2 className="text-sm font-semibold uppercase tracking-widest text-teal-600 mb-6">
+                  Tất cả bài viết
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {restCards.map((post) => (
+                    <Link
+                      key={post.slug}
+                      href={`/blog/${post.slug}`}
+                      className="group rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-md transition-shadow overflow-hidden"
+                    >
+                      <div className={`h-40 w-full ${post.cover} flex items-center justify-center`}>
+                        <BookOpen className="h-10 w-10 text-white/60" />
+                      </div>
+                      <div className="p-5">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="rounded-full bg-teal-50 text-teal-700 text-xs font-semibold px-3 py-1 flex items-center gap-1">
+                            <Tag className="h-3 w-3" /> {post.tag}
+                          </span>
+                        </div>
+                        <h3 className="font-bold text-gray-900 text-sm line-clamp-2 group-hover:text-teal-700 transition-colors">
+                          {post.title}
+                        </h3>
+                        <p className="mt-2 text-xs text-gray-500 line-clamp-2">{post.excerpt}</p>
+                        <div className="mt-4 flex items-center justify-between text-xs text-gray-400">
+                          <span>{post.author}</span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-3 w-3" /> {post.readTime}
+                          </span>
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
                 </div>
-                <h3 className="font-bold text-gray-900 text-sm line-clamp-2 group-hover:text-teal-700 transition-colors">
-                  {post.title}
-                </h3>
-                <p className="mt-2 text-xs text-gray-500 line-clamp-2">{post.excerpt}</p>
-                <div className="mt-4 flex items-center justify-between text-xs text-gray-400">
-                  <span>{post.author}</span>
-                  <span className="flex items-center gap-1">
-                    <Clock className="h-3 w-3" /> {post.readTime}
-                  </span>
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
+              </>
+            )}
+          </>
+        )}
 
         {/* Coming soon notice */}
         <div className="mt-12 rounded-2xl bg-teal-50 border border-teal-100 p-8 text-center">
           <p className="text-teal-700 font-semibold text-lg mb-1">Thêm bài viết đang được chuẩn bị</p>
-          <p className="text-teal-600 text-sm">Đăng ký nhận tin ở footer để nhận thông báo khi có bài mới.</p>
+          <p className="text-teal-600 text-sm">
+            Đăng ký nhận tin ở footer để nhận thông báo bài viết mới nhất.
+          </p>
         </div>
       </section>
     </main>
