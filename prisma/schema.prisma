@@ -93,6 +93,12 @@ model Course {
   featured      Boolean      @default(false)
   totalDuration Int          @default(0)
   totalLessons  Int          @default(0)
+  fakeRating    Float?
+  fakeReviews   Int?
+  fakeStudents  Int?
+  badge         String?
+  whatYouLearn  String[]
+  requirements  String[]
   categoryId    String
   instructorId  String
   createdAt     DateTime     @default(now())
