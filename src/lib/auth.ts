@@ -57,6 +57,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
       return session;
     },
+    async redirect({ url, baseUrl }) {
+      // Nếu là relative path → cho qua
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      // Nếu cùng origin → cho qua
+      try {
+        const u = new URL(url);
+        const b = new URL(baseUrl);
+        if (u.hostname === b.hostname) return url;
+      } catch {}
+      return baseUrl;
+    },
   },
   pages: {
     signIn: "/login",
